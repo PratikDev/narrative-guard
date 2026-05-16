@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "convex-create-component": {
+      "source": "get-convex/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/convex-create-component/SKILL.md",
+      "computedHash": "25b6f56cc6afa4237aa191f5bfa5b86f68b70dc7f1195b86d027bd85346cff41"
+    },
+    "convex-quickstart": {
+      "source": "get-convex/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/convex-quickstart/SKILL.md",
+      "computedHash": "8735052585ff81bb6ad4b362a7bb599413288e55d071c8ddf4f798b6d989ebac"
+    },
+    "nextjs-app-router-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-mobile-development/skills/nextjs-app-router-patterns/SKILL.md",
+      "computedHash": "d2f0a7065f7418fdb3ae88559f1f1426f40c26f2b5aebcd394797418d4bb3b04"
+    },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "80a6226e78f6d1fe464214ae0ef449d49d8ffaa3e7704f011e9b418c678ad4d1"
+    }
+  }
+}
