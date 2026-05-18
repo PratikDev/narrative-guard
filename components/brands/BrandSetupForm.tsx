@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { AlertCircle, Save } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,29 +15,34 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { BrandConstitutionPreview } from "./BrandConstitutionPreview";
-import type { Brand } from "@/lib/types";
 
-export function BrandSetupForm({ initialBrand }: { initialBrand: Brand }) {
-  const [name, setName] = useState(initialBrand.name);
-  const [constitution, setConstitution] = useState(initialBrand.constitution);
-  const [savedConstitution, setSavedConstitution] = useState(
-    initialBrand.constitution
-  );
+export function BrandSetupForm() {
+  const brands = useQuery(api.brand.listBrands);
+  const createBrand = useMutation(api.brand.createBrand);
+  const [name, setName] = useState("");
+  const [constitution, setConstitution] = useState("");
+  const [savedConstitution, setSavedConstitution] = useState("");
   const [state, setState] = useState<"idle" | "loading" | "success" | "error">(
     "idle"
   );
 
-  function saveBrand() {
+  async function saveBrand() {
     if (!name.trim() || !constitution.trim()) {
       setState("error");
       return;
     }
 
     setState("loading");
-    window.setTimeout(() => {
+    try {
+      await createBrand({
+        name,
+        constitution,
+      });
       setSavedConstitution(constitution);
       setState("success");
-    }, 650);
+    } catch {
+      setState("error");
+    }
   }
 
   return (
@@ -67,9 +74,9 @@ export function BrandSetupForm({ initialBrand }: { initialBrand: Brand }) {
           </Button>
           {state === "success" ? (
             <Alert className="border-primary/40 bg-primary/10">
-              <AlertTitle>Brand saved for this session</AlertTitle>
+              <AlertTitle>Brand saved</AlertTitle>
               <AlertDescription>
-                This is a frontend-only mock state. No data has been persisted.
+                The brand constitution has been persisted in Convex.
               </AlertDescription>
             </Alert>
           ) : null}
@@ -84,7 +91,32 @@ export function BrandSetupForm({ initialBrand }: { initialBrand: Brand }) {
           ) : null}
         </CardContent>
       </Card>
-      <BrandConstitutionPreview constitution={savedConstitution} />
+      <div className="space-y-4">
+        <BrandConstitutionPreview constitution={savedConstitution} />
+        <Card className="rounded-lg">
+          <CardHeader>
+            <CardTitle>Saved brands</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {brands === undefined ? (
+              <p className="text-sm text-muted-foreground">Loading brands...</p>
+            ) : brands.length ? (
+              brands.map((brand) => (
+                <div key={brand._id} className="rounded-lg border p-3">
+                  <p className="text-sm font-medium">{brand.name}</p>
+                  <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                    {brand.constitution}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No brands have been saved yet.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

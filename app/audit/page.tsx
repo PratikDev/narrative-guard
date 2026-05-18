@@ -1,6 +1,5 @@
 import { AuditForm } from "@/components/audit/AuditForm";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { mockBrands } from "@/lib/mock-data";
 
 export default function AuditPage() {
   return (
@@ -9,7 +8,7 @@ export default function AuditPage() {
         title="Content Audit"
         description="Paste content, choose a brand and content type, then generate a mock brand-coherence report."
       />
-      <AuditForm brands={mockBrands} />
+      <AuditForm />
     </div>
   );
 }

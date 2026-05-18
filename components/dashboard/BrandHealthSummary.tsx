@@ -21,7 +21,7 @@ export function BrandHealthSummary() {
       <CardContent className="space-y-4">
         {health.map(({ brand, averageScore, latestReport, reportCount }) => (
           <div
-            key={brand.id}
+            key={brand.name}
             className="grid gap-3 rounded-lg border p-4 sm:grid-cols-[1fr_auto] sm:items-center"
           >
             <div>

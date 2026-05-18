@@ -2,6 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2, Play } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,11 +26,12 @@ import { LoadingState } from "@/components/shared/LoadingState";
 import { CONTENT_TYPE_LABELS, CONTENT_TYPES } from "@/lib/constants";
 import { mockReports } from "@/lib/mock-data";
 import { getVerdictForScore } from "@/lib/score";
-import type { AuditReport, Brand, ContentType } from "@/lib/types";
+import type { AuditReport, ContentType } from "@/lib/types";
 import { AuditResult } from "./AuditResult";
 
-export function AuditForm({ brands }: { brands: Brand[] }) {
-  const [brandId, setBrandId] = useState(brands[0]?.id ?? "");
+export function AuditForm() {
+  const brands = useQuery(api.brand.listBrands);
+  const [brandId, setBrandId] = useState<Id<"brands"> | "">("");
   const [contentType, setContentType] = useState<ContentType>("generic");
   const [content, setContent] = useState(
     "This campaign helps teams move faster with confident messaging, clearer priorities, and less review friction before launch."
@@ -37,13 +41,13 @@ export function AuditForm({ brands }: { brands: Brand[] }) {
   );
   const [report, setReport] = useState<AuditReport | null>(null);
 
-  const selectedBrand = brands.find((brand) => brand.id === brandId) ?? brands[0];
+  const activeBrandId = brandId || brands?.[0]?._id || "";
+  const selectedBrand = brands?.find((brand) => brand._id === activeBrandId);
 
   const mockReport = useMemo(() => {
     const matched =
-      mockReports.find(
-        (item) => item.brandId === brandId && item.contentType === contentType
-      ) ?? mockReports.find((item) => item.brandId === brandId) ?? mockReports[0];
+      mockReports.find((item) => item.contentType === contentType) ??
+      mockReports[0];
 
     const score = content.toLowerCase().includes("guarantee")
       ? Math.min(matched.score, 62)
@@ -52,7 +56,7 @@ export function AuditForm({ brands }: { brands: Brand[] }) {
     return {
       ...matched,
       id: "report-current",
-      brandId: selectedBrand?.id ?? matched.brandId,
+      brandId: selectedBrand?._id ?? matched.brandId,
       brandName: selectedBrand?.name ?? matched.brandName,
       contentType,
       originalContent: content,
@@ -61,10 +65,10 @@ export function AuditForm({ brands }: { brands: Brand[] }) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-  }, [brandId, content, contentType, selectedBrand?.id, selectedBrand?.name]);
+  }, [content, contentType, selectedBrand?._id, selectedBrand?.name]);
 
   function analyze() {
-    if (!brandId || !content.trim()) {
+    if (!activeBrandId || !content.trim()) {
       setStatus("failed");
       setReport(null);
       return;
@@ -87,11 +91,21 @@ export function AuditForm({ brands }: { brands: Brand[] }) {
         <CardContent className="space-y-4">
           <label className="grid gap-2 text-sm font-medium">
             Brand
-            <BrandSelector
-              brands={brands}
-              value={brandId}
-              onValueChange={setBrandId}
-            />
+            {brands === undefined ? (
+              <div className="rounded-lg border px-2.5 py-2 text-sm text-muted-foreground">
+                Loading brands...
+              </div>
+            ) : brands.length ? (
+              <BrandSelector
+                brands={brands}
+                value={activeBrandId}
+                onValueChange={setBrandId}
+              />
+            ) : (
+              <div className="rounded-lg border border-dashed px-2.5 py-2 text-sm text-muted-foreground">
+                Create a brand before running an audit.
+              </div>
+            )}
           </label>
           <label className="grid gap-2 text-sm font-medium">
             Content type
@@ -122,7 +136,10 @@ export function AuditForm({ brands }: { brands: Brand[] }) {
               placeholder="Paste the content you plan to publish."
             />
           </label>
-          <Button onClick={analyze} disabled={status === "processing"}>
+          <Button
+            onClick={analyze}
+            disabled={status === "processing" || brands === undefined}
+          >
             <Play className="size-4" />
             Analyze
           </Button>

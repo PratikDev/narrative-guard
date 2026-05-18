@@ -1,44 +1,27 @@
-export type Id = string;
+import type { Doc } from "@/convex/_generated/dataModel";
+import { dimensionScores } from "@/convex/schema";
+import { Infer } from "convex/values";
 
-export type Verdict = "on_brand" | "needs_review" | "off_brand";
+export type Verdict = Doc<"auditReports">["verdict"];
 
-export type ContentType =
-  | "generic"
-  | "social_post"
-  | "website_copy"
-  | "email"
-  | "press_release"
-  | "ad_copy";
+export type ContentType = Doc<"auditReports">["contentType"];
 
-export type AuditStatus = "idle" | "processing" | "complete" | "failed";
+export type AuditStatus = Doc<"auditReports">["status"];
 
-export type ScoreDimension =
-  | "toneAlignment"
-  | "messagingAlignment"
-  | "bannedPhraseSafety"
-  | "audienceFit"
-  | "clarityAndTrust";
-
-export type Brand = {
-  id: Id;
-  name: string;
-  constitution: string;
-  createdAt: string;
-  updatedAt: string;
-};
+export type ScoreDimension = keyof Infer<typeof dimensionScores>;
 
 export type DimensionScores = Record<ScoreDimension, number>;
 
 export type FlaggedSentence = {
-  id: Id;
+  id: string;
   sentence: string;
   reason: string;
-  severity: "low" | "medium" | "high";
+  severity: Doc<"auditFindings">["severity"];
 };
 
 export type AuditReport = {
-  id: Id;
-  brandId: Id;
+  id: string;
+  brandId: string;
   brandName: string;
   contentType: ContentType;
   originalContent: string;
@@ -59,15 +42,4 @@ export type DashboardStats = {
   needsReviewCount: number;
   offBrandCount: number;
   onBrandCount: number;
-};
-
-export type BrandFormValues = {
-  name: string;
-  constitution: string;
-};
-
-export type AuditFormValues = {
-  brandId: Id;
-  contentType: ContentType;
-  content: string;
 };

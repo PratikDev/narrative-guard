@@ -1,31 +1,4 @@
-import type { AuditReport, Brand, DashboardStats } from "./types";
-
-export const mockBrands: Brand[] = [
-  {
-    id: "brand-northstar",
-    name: "Northstar Capital",
-    constitution:
-      "Use a measured, confident, plain-spoken voice. Lead with evidence and operational clarity. Avoid hype, guarantees, casual slang, and fear-based language. Preferred phrases include disciplined growth, resilient portfolio, long-term confidence, and practical guidance. Audience: founders, CFOs, and private market operators.",
-    createdAt: "2026-03-05T09:00:00Z",
-    updatedAt: "2026-05-01T10:30:00Z",
-  },
-  {
-    id: "brand-evergreen",
-    name: "Evergreen Studio",
-    constitution:
-      "Sound warm, useful, and design-literate without sounding precious. Explain outcomes before aesthetics. Avoid jargon, insider design references, and claims that feel exclusive. Audience: independent retailers, hospitality teams, and service businesses.",
-    createdAt: "2026-02-14T13:00:00Z",
-    updatedAt: "2026-04-27T15:20:00Z",
-  },
-  {
-    id: "brand-clinica",
-    name: "Clinica One",
-    constitution:
-      "Use clear, reassuring, clinically responsible language. Never overpromise outcomes or imply urgent risk without context. Prefer accessible explanations, privacy-forward wording, and patient agency. Audience: patients, caregivers, and employer benefits teams.",
-    createdAt: "2026-01-22T11:20:00Z",
-    updatedAt: "2026-05-03T08:45:00Z",
-  },
-];
+import type { AuditReport, DashboardStats } from "./types";
 
 export const mockReports: AuditReport[] = [
   {
@@ -249,8 +222,12 @@ export function getReportById(reportId: string) {
 }
 
 export function getBrandHealth() {
-  return mockBrands.map((brand) => {
-    const reports = mockReports.filter((report) => report.brandId === brand.id);
+  const brandNames = Array.from(
+    new Set(mockReports.map((report) => report.brandName))
+  );
+
+  return brandNames.map((brandName) => {
+    const reports = mockReports.filter((report) => report.brandName === brandName);
     const averageScore = reports.length
       ? Math.round(
           reports.reduce((total, report) => total + report.score, 0) /
@@ -258,7 +235,9 @@ export function getBrandHealth() {
         )
       : 0;
     return {
-      brand,
+      brand: {
+        name: brandName,
+      },
       averageScore,
       latestReport: reports[0],
       reportCount: reports.length,
