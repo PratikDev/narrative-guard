@@ -29,6 +29,14 @@ const findingSeverity = v.union(
   v.literal("high")
 );
 
+export const dimensionScores = v.object({
+  toneAlignment: v.number(),
+  messagingAlignment: v.number(),
+  bannedPhraseSafety: v.number(),
+  audienceFit: v.number(),
+  clarityAndTrust: v.number(),
+});
+
 export default defineSchema({
   brands: defineTable({
     name: v.string(),
@@ -60,11 +68,7 @@ export default defineSchema({
     verdict,
     summary: v.string(),
 
-    toneAlignment: v.number(),
-    messagingAlignment: v.number(),
-    bannedPhraseSafety: v.number(),
-    audienceFit: v.number(),
-    clarityAndTrust: v.number(),
+    ...dimensionScores.fields,
 
     rewriteSuggestion: v.string(),
     status: auditStatus,
