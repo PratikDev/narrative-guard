@@ -1,0 +1,91 @@
+import { defineSchema, defineTable } from "convex/server";
+import { v } from "convex/values";
+
+const verdict = v.union(
+  v.literal("on_brand"),
+  v.literal("needs_review"),
+  v.literal("off_brand")
+);
+
+const contentType = v.union(
+  v.literal("generic"),
+  v.literal("social_post"),
+  v.literal("website_copy"),
+  v.literal("email"),
+  v.literal("press_release"),
+  v.literal("ad_copy")
+);
+
+const auditStatus = v.union(
+  v.literal("idle"),
+  v.literal("processing"),
+  v.literal("complete"),
+  v.literal("failed")
+);
+
+const findingSeverity = v.union(
+  v.literal("low"),
+  v.literal("medium"),
+  v.literal("high")
+);
+
+export default defineSchema({
+  brands: defineTable({
+    name: v.string(),
+    constitution: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }),
+
+  constitutionChunks: defineTable({
+    brandId: v.id("brands"),
+    chunkIndex: v.number(),
+    text: v.string(),
+    embedding: v.array(v.float64()),
+    createdAt: v.number(),
+  })
+    .index("by_brand", ["brandId"])
+    .vectorIndex("by_embedding", {
+      vectorField: "embedding",
+      dimensions: 1536,
+      filterFields: ["brandId"],
+    }),
+
+  auditReports: defineTable({
+    brandId: v.id("brands"),
+    contentType,
+    originalContent: v.string(),
+
+    score: v.number(),
+    verdict,
+    summary: v.string(),
+
+    toneAlignment: v.number(),
+    messagingAlignment: v.number(),
+    bannedPhraseSafety: v.number(),
+    audienceFit: v.number(),
+    clarityAndTrust: v.number(),
+
+    rewriteSuggestion: v.string(),
+    status: auditStatus,
+    error: v.optional(v.string()),
+
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_brand_created", ["brandId", "createdAt"])
+    .index("by_created", ["createdAt"])
+    .index("by_verdict", ["verdict"])
+    .index("by_brand_verdict", ["brandId", "verdict"]),
+
+  auditFindings: defineTable({
+    reportId: v.id("auditReports"),
+    brandId: v.id("brands"),
+    sentence: v.string(),
+    reason: v.string(),
+    severity: findingSeverity,
+    createdAt: v.number(),
+  })
+    .index("by_report", ["reportId"])
+    .index("by_brand", ["brandId"]),
+});

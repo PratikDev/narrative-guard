@@ -7,12 +7,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "sad": "bunx --bun shadcn@latest add"
+    "sad": "bunx --bun shadcn@latest add",
+    "convex": "bunx convex dev --once",
+    "convex:watch": "bunx convex dev",
+    "convex:dash": "bunx convex dash"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "convex": "^1.39.1",
     "lucide-react": "^1.16.0",
     "next": "16.2.6",
     "react": "19.2.4",
