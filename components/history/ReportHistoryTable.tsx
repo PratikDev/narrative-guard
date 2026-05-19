@@ -1,6 +1,7 @@
 "use client";
 
 import { EmptyState } from "@/components/shared/EmptyState";
+import { LoadingState } from "@/components/shared/LoadingState";
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,13 @@ import { Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-export function ReportHistoryTable({ reports }: { reports: AuditReport[] }) {
+export function ReportHistoryTable({
+	reports,
+	loading = false,
+}: {
+	reports: AuditReport[];
+	loading?: boolean;
+}) {
 	const [query, setQuery] = useState("");
 	const [verdict, setVerdict] = useState<Verdict | "all">("all");
 	const [contentType, setContentType] = useState<ContentType | "all">("all");
@@ -51,6 +58,10 @@ export function ReportHistoryTable({ reports }: { reports: AuditReport[] }) {
 			return matchesQuery && matchesVerdict && matchesType;
 		});
 	}, [contentType, query, reports, verdict]);
+
+	if (loading) {
+		return <LoadingState label="Loading report history" />;
+	}
 
 	if (!reports.length) {
 		return (
@@ -160,9 +171,9 @@ export function ReportHistoryTable({ reports }: { reports: AuditReport[] }) {
 										<Button
 											variant="outline"
 											size="sm"
-											render={<Link href={`/reports/${report.id}`} />}
+											asChild
 										>
-											Open report
+											<Link href={`/reports/${report.id}`}>Open report</Link>
 										</Button>
 									</TableCell>
 								</TableRow>

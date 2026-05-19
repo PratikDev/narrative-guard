@@ -56,6 +56,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	return (
 		<Sidebar
 			variant="inset"
+			collapsible="icon"
 			{...props}
 		>
 			<SidebarHeader>
@@ -63,22 +64,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					<SidebarMenuItem>
 						<SidebarMenuButton
 							size="lg"
-							render={
-								<Link
-									href="/"
-									className="flex items-center gap-2"
-								>
-									<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-										<Command className="size-4" />
-									</div>
+							asChild
+						>
+							<Link
+								href="/"
+								className="flex items-center gap-2"
+							>
+								<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+									<Command className="size-4" />
+								</div>
 
-									<div className="grid flex-1 text-left text-sm leading-tight">
-										<span className="truncate font-medium">Acme Inc</span>
-										<span className="truncate text-xs">Enterprise</span>
-									</div>
-								</Link>
-							}
-						></SidebarMenuButton>
+								<div className="grid flex-1 text-left text-sm leading-tight">
+									<span className="truncate font-medium">Acme Inc</span>
+									<span className="truncate text-xs">Enterprise</span>
+								</div>
+							</Link>
+						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
 			</SidebarHeader>
@@ -113,7 +114,6 @@ function NavUser({ user }: { user: typeof data.user }) {
 						<span className="truncate font-medium">{user.name}</span>
 						<span className="truncate text-xs">{user.email}</span>
 					</div>
-					{/* <ChevronsUpDown className="ml-auto size-4" /> */}
 				</SidebarMenuButton>
 			</SidebarMenuItem>
 		</SidebarMenu>
@@ -128,17 +128,15 @@ function NavItems({ projects }: { projects: typeof data.navItems }) {
 			<SidebarMenu>
 				{projects.map((item, idx) => (
 					<SidebarMenuItem key={item.name + idx}>
-						<SidebarMenuButton
-							render={
-								<Link
-									href={item.url}
-									className="flex items-center gap-2"
-								>
-									<item.icon />
-									<span>{item.name}</span>
-								</Link>
-							}
-						></SidebarMenuButton>
+						<SidebarMenuButton asChild>
+							<Link
+								href={item.url}
+								className="flex items-center gap-2"
+							>
+								<item.icon />
+								<span>{item.name}</span>
+							</Link>
+						</SidebarMenuButton>
 					</SidebarMenuItem>
 				))}
 			</SidebarMenu>

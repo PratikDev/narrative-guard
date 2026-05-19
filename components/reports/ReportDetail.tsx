@@ -22,13 +22,17 @@ export function ReportDetail({ report }: { report: AuditReport }) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" render={<Link href="/history" />}>
-          <ArrowLeft className="size-4" />
-          Back to history
+        <Button variant="outline" asChild>
+          <Link href="/history">
+            <ArrowLeft className="size-4" />
+            Back to history
+          </Link>
         </Button>
-        <Button render={<Link href="/audit" />}>
-          <FileText className="size-4" />
-          Run another audit
+        <Button asChild>
+          <Link href="/audit">
+            <FileText className="size-4" />
+            Run another audit
+          </Link>
         </Button>
       </div>
 

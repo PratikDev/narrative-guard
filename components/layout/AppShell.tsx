@@ -27,7 +27,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 					<Breadcrumb>
 						<BreadcrumbList>
 							<BreadcrumbItem className="hidden md:block">
-								<BreadcrumbLink render={<Link href="/">Home</Link>} />
+								<BreadcrumbLink asChild>
+									<Link href="/">Home</Link>
+								</BreadcrumbLink>
 							</BreadcrumbItem>
 						</BreadcrumbList>
 					</Breadcrumb>

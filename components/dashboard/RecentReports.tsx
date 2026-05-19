@@ -35,9 +35,11 @@ export function RecentReports({ reports }: { reports: AuditReport[] }) {
               <span className="text-muted-foreground">
                 {formatDate(report.createdAt)}
               </span>
-              <Button variant="outline" size="sm" render={<Link href={`/reports/${report.id}`} />}>
-                Open
-                <ArrowUpRight className="size-3.5" />
+              <Button variant="outline" size="sm" asChild>
+                <Link href={`/reports/${report.id}`}>
+                  Open
+                  <ArrowUpRight className="size-3.5" />
+                </Link>
               </Button>
             </div>
           ))}

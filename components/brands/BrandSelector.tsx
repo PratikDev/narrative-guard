@@ -22,9 +22,7 @@ export function BrandSelector({
 
 	return (
 		<Select
-			// name={activeBrand?.name || ""}
 			value={activeBrand?._id || ""}
-			defaultValue={""}
 			onValueChange={(nextValue) => {
 				if (nextValue) onValueChange(nextValue as Id<"brands">);
 			}}

@@ -8,11 +8,23 @@ import {
 } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay";
-import { getBrandHealth } from "@/lib/mock-data";
+import type { AuditReport } from "@/lib/types";
 
-export function BrandHealthSummary() {
-  const health = getBrandHealth();
+type BrandHealthItem = {
+  brand: {
+    id: string;
+    name: string;
+  };
+  averageScore: number;
+  latestReport: AuditReport | null;
+  reportCount: number;
+};
 
+export function BrandHealthSummary({
+  health,
+}: {
+  health: BrandHealthItem[];
+}) {
   return (
     <Card className="rounded-lg">
       <CardHeader>
@@ -21,7 +33,7 @@ export function BrandHealthSummary() {
       <CardContent className="space-y-4">
         {health.map(({ brand, averageScore, latestReport, reportCount }) => (
           <div
-            key={brand.name}
+            key={brand.id}
             className="grid gap-3 rounded-lg border p-4 sm:grid-cols-[1fr_auto] sm:items-center"
           >
             <div>
@@ -37,9 +49,9 @@ export function BrandHealthSummary() {
                 <Button
                   variant="outline"
                   size="sm"
-                  render={<Link href={`/reports/${latestReport.id}`} />}
+                  asChild
                 >
-                  Latest report
+                  <Link href={`/reports/${latestReport.id}`}>Latest report</Link>
                 </Button>
               ) : null}
             </div>

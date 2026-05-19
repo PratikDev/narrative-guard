@@ -32,8 +32,8 @@ export type AuditReport = {
   flaggedSentences: FlaggedSentence[];
   rewriteSuggestion: string;
   status: AuditStatus;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: number;
+  updatedAt: number;
 };
 
 export type DashboardStats = {

@@ -21,8 +21,8 @@ export function EmptyState({
         {description}
       </p>
       {actionHref && actionLabel ? (
-        <Button render={<Link href={actionHref} />} className="mt-4">
-          {actionLabel}
+        <Button className="mt-4" asChild>
+          <Link href={actionHref}>{actionLabel}</Link>
         </Button>
       ) : null}
     </div>

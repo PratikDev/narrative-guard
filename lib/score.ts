@@ -1,11 +1,5 @@
 import type { Verdict } from "./types";
 
-export function getVerdictForScore(score: number): Verdict {
-  if (score >= 85) return "on_brand";
-  if (score >= 65) return "needs_review";
-  return "off_brand";
-}
-
 export function getScoreTone(score: number) {
   if (score >= 85) return "text-emerald-700";
   if (score >= 65) return "text-amber-700";

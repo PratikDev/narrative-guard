@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { AlertCircle, CheckCircle2, Play } from "lucide-react";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -24,14 +24,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { BrandSelector } from "@/components/brands/BrandSelector";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { CONTENT_TYPE_LABELS, CONTENT_TYPES } from "@/lib/constants";
-import { mockReports } from "@/lib/mock-data";
-import { getVerdictForScore } from "@/lib/score";
-import type { AuditReport, ContentType } from "@/lib/types";
+import type { ContentType } from "@/lib/types";
 import { AuditResult } from "./AuditResult";
 
 export function AuditForm() {
   const brands = useQuery(api.brand.listBrands);
+  const createManualAudit = useMutation(api.audit.createManualAudit);
   const [brandId, setBrandId] = useState<Id<"brands"> | "">("");
+  const [currentReportId, setCurrentReportId] =
+    useState<Id<"auditReports"> | null>(null);
   const [contentType, setContentType] = useState<ContentType>("generic");
   const [content, setContent] = useState(
     "This campaign helps teams move faster with confident messaging, clearer priorities, and less review friction before launch."
@@ -39,47 +40,34 @@ export function AuditForm() {
   const [status, setStatus] = useState<"idle" | "processing" | "complete" | "failed">(
     "idle"
   );
-  const [report, setReport] = useState<AuditReport | null>(null);
+  const report = useQuery(
+    api.report.getReportWithFindings,
+    currentReportId ? { reportId: currentReportId } : "skip"
+  );
 
   const activeBrandId = brandId || brands?.[0]?._id || "";
-  const selectedBrand = brands?.find((brand) => brand._id === activeBrandId);
 
-  const mockReport = useMemo(() => {
-    const matched =
-      mockReports.find((item) => item.contentType === contentType) ??
-      mockReports[0];
-
-    const score = content.toLowerCase().includes("guarantee")
-      ? Math.min(matched.score, 62)
-      : matched.score;
-
-    return {
-      ...matched,
-      id: "report-current",
-      brandId: selectedBrand?._id ?? matched.brandId,
-      brandName: selectedBrand?.name ?? matched.brandName,
-      contentType,
-      originalContent: content,
-      score,
-      verdict: getVerdictForScore(score),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-  }, [content, contentType, selectedBrand?._id, selectedBrand?.name]);
-
-  function analyze() {
+  async function analyze() {
     if (!activeBrandId || !content.trim()) {
       setStatus("failed");
-      setReport(null);
+      setCurrentReportId(null);
       return;
     }
 
     setStatus("processing");
-    setReport(null);
-    window.setTimeout(() => {
-      setReport(mockReport);
+    setCurrentReportId(null);
+
+    try {
+      const result = await createManualAudit({
+        brandId: activeBrandId,
+        contentType,
+        content,
+      });
+      setCurrentReportId(result.reportId);
       setStatus("complete");
-    }, 900);
+    } catch {
+      setStatus("failed");
+    }
   }
 
   return (
@@ -156,15 +144,18 @@ export function AuditForm() {
             </AlertDescription>
           </Alert>
         ) : null}
-        {status === "processing" ? <LoadingState label="Analyzing content" /> : null}
+        {status === "processing" ||
+        (status === "complete" && currentReportId && report === undefined) ? (
+          <LoadingState label="Analyzing content" />
+        ) : null}
         {status === "complete" && report ? (
           <>
             <Alert>
               <CheckCircle2 className="size-4" />
-              <AlertTitle>Mock report created</AlertTitle>
+              <AlertTitle>Report saved</AlertTitle>
               <AlertDescription>
-                The result below is generated from static demo data for this
-                frontend phase.
+                The audit report has been persisted in Convex and is available
+                in report history.
               </AlertDescription>
             </Alert>
             <AuditResult report={report} />
