@@ -9,6 +9,7 @@
     "lint": "eslint",
     "sad": "bunx --bun shadcn@latest add",
     "convex": "bunx convex dev --once",
+    "prod": "bun run convex && bun run build && bun run start",
     "convex:watch": "bunx convex dev",
     "convex:dash": "bunx convex dash"
   },
