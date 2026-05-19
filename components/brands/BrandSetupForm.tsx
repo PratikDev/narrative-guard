@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, Save } from "lucide-react";
+import Link from "next/link";
+import { AlertCircle, Pencil, Save } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -15,13 +16,23 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { BrandConstitutionPreview } from "./BrandConstitutionPreview";
+import { ConstitutionChunksPreview } from "./ConstitutionChunksPreview";
+import type { Doc } from "@/convex/_generated/dataModel";
 
-export function BrandSetupForm() {
+export function BrandSetupForm({ brand }: { brand?: Doc<"brands"> }) {
   const brands = useQuery(api.brand.listBrands);
   const createBrand = useMutation(api.brand.createBrand);
-  const [name, setName] = useState("");
-  const [constitution, setConstitution] = useState("");
-  const [savedConstitution, setSavedConstitution] = useState("");
+  const updateBrand = useMutation(api.brand.updateBrand);
+  const isEditing = Boolean(brand);
+  const [name, setName] = useState(brand?.name ?? "");
+  const [constitution, setConstitution] = useState(brand?.constitution ?? "");
+  const [savedConstitution, setSavedConstitution] = useState(
+    brand?.constitution ?? ""
+  );
+  const [savedBrandId, setSavedBrandId] = useState<Doc<"brands">["_id"] | null>(
+    brand?._id ?? null
+  );
+  const [savedChunkCount, setSavedChunkCount] = useState<number | null>(null);
   const [state, setState] = useState<"idle" | "loading" | "success" | "error">(
     "idle"
   );
@@ -34,10 +45,18 @@ export function BrandSetupForm() {
 
     setState("loading");
     try {
-      await createBrand({
-        name,
-        constitution,
-      });
+      const result = isEditing && brand
+        ? await updateBrand({
+            brandId: brand._id,
+            name,
+            constitution,
+          })
+        : await createBrand({
+            name,
+            constitution,
+          });
+      setSavedBrandId(result.brandId);
+      setSavedChunkCount(result.chunkCount);
       setSavedConstitution(constitution);
       setState("success");
     } catch {
@@ -49,7 +68,7 @@ export function BrandSetupForm() {
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.8fr)]">
       <Card className="rounded-lg">
         <CardHeader>
-          <CardTitle>Brand details</CardTitle>
+          <CardTitle>{isEditing ? "Edit brand details" : "Brand details"}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <label className="grid gap-2 text-sm font-medium">
@@ -70,13 +89,20 @@ export function BrandSetupForm() {
           </p>
           <Button onClick={saveBrand} disabled={state === "loading"}>
             <Save className="size-4" />
-            {state === "loading" ? "Saving" : "Save brand"}
+            {state === "loading"
+              ? "Saving"
+              : isEditing
+                ? "Update brand"
+                : "Save brand"}
           </Button>
           {state === "success" ? (
             <Alert className="border-primary/40 bg-primary/10">
-              <AlertTitle>Brand saved</AlertTitle>
+              <AlertTitle>{isEditing ? "Brand updated" : "Brand saved"}</AlertTitle>
               <AlertDescription>
-                The brand constitution has been persisted in Convex.
+                The brand constitution has been persisted in Convex
+                {savedChunkCount === null
+                  ? "."
+                  : ` and split into ${savedChunkCount} chunks.`}
               </AlertDescription>
             </Alert>
           ) : null}
@@ -93,6 +119,14 @@ export function BrandSetupForm() {
       </Card>
       <div className="space-y-4">
         <BrandConstitutionPreview constitution={savedConstitution} />
+        <ConstitutionChunksPreview
+          brand={
+            brands?.find((brand) => brand._id === savedBrandId) ??
+            (brand && brand._id === savedBrandId ? brand : undefined) ??
+            brands?.[0] ??
+            null
+          }
+        />
         <Card className="rounded-lg">
           <CardHeader>
             <CardTitle>Saved brands</CardTitle>
@@ -102,11 +136,21 @@ export function BrandSetupForm() {
               <p className="text-sm text-muted-foreground">Loading brands...</p>
             ) : brands.length ? (
               brands.map((brand) => (
-                <div key={brand._id} className="rounded-lg border p-3">
-                  <p className="text-sm font-medium">{brand.name}</p>
-                  <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
-                    {brand.constitution}
-                  </p>
+                <div
+                  key={brand._id}
+                  className="grid grid-cols-[1fr_auto] gap-3 rounded-lg border p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{brand.name}</p>
+                    <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                      {brand.constitution}
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="icon" asChild>
+                    <Link href={`/setup/${brand._id}`} aria-label={`Edit ${brand.name}`}>
+                      <Pencil className="size-4" />
+                    </Link>
+                  </Button>
                 </div>
               ))
             ) : (

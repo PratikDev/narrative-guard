@@ -49,15 +49,10 @@ export default defineSchema({
     brandId: v.id("brands"),
     chunkIndex: v.number(),
     text: v.string(),
-    embedding: v.array(v.float64()),
+    embedding: v.optional(v.array(v.float64())),
     createdAt: v.number(),
   })
-    .index("by_brand", ["brandId"])
-    .vectorIndex("by_embedding", {
-      vectorField: "embedding",
-      dimensions: 1536,
-      filterFields: ["brandId"],
-    }),
+    .index("by_brand", ["brandId"]),
 
   auditReports: defineTable({
     brandId: v.id("brands"),

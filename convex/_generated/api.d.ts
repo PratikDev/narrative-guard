@@ -10,6 +10,8 @@
 
 import type * as audit from "../audit.js";
 import type * as brand from "../brand.js";
+import type * as constitution from "../constitution.js";
+import type * as lib_constitutionChunking from "../lib/constitutionChunking.js";
 import type * as report from "../report.js";
 
 import type {
@@ -21,6 +23,8 @@ import type {
 declare const fullApi: ApiFromModules<{
   audit: typeof audit;
   brand: typeof brand;
+  constitution: typeof constitution;
+  "lib/constitutionChunking": typeof lib_constitutionChunking;
   report: typeof report;
 }>;
 

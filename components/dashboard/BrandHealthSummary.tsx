@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -54,6 +55,11 @@ export function BrandHealthSummary({
                   <Link href={`/reports/${latestReport.id}`}>Latest report</Link>
                 </Button>
               ) : null}
+              <Button variant="ghost" size="icon" asChild>
+                <Link href={`/setup/${brand.id}`} aria-label={`Edit ${brand.name}`}>
+                  <Pencil className="size-4" />
+                </Link>
+              </Button>
             </div>
           </div>
         ))}

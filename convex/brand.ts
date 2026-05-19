@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { replaceConstitutionChunksForBrand } from "./lib/constitutionChunking";
 
 export const createBrand = mutation({
   args: {
@@ -9,12 +10,23 @@ export const createBrand = mutation({
   handler: async (ctx, args) => {
     const now = Date.now();
 
-    return await ctx.db.insert("brands", {
+    const brandId = await ctx.db.insert("brands", {
       name: args.name.trim(),
       constitution: args.constitution.trim(),
       createdAt: now,
       updatedAt: now,
     });
+
+    const chunkResult = await replaceConstitutionChunksForBrand(
+      ctx,
+      brandId,
+      args.constitution
+    );
+
+    return {
+      brandId,
+      chunkCount: chunkResult.chunkCount,
+    };
   },
 });
 
@@ -31,7 +43,16 @@ export const updateBrand = mutation({
       updatedAt: Date.now(),
     });
 
-    return args.brandId;
+    const chunkResult = await replaceConstitutionChunksForBrand(
+      ctx,
+      args.brandId,
+      args.constitution
+    );
+
+    return {
+      brandId: args.brandId,
+      chunkCount: chunkResult.chunkCount,
+    };
   },
 });
 
