@@ -1,9 +1,9 @@
 "use client";
 
 import { EmptyState } from "@/components/shared/EmptyState";
+import { AuditReportStatusBadge } from "@/components/shared/AuditReportStatusBadge";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay";
-import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -28,6 +28,7 @@ import {
 	VERDICTS,
 } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
+import { isCompletedAuditReport } from "@/lib/audit-report";
 import type { AuditReport, ContentType, Verdict } from "@/lib/types";
 import { Search } from "lucide-react";
 import Link from "next/link";
@@ -52,7 +53,9 @@ export function ReportHistoryTable({
 				report.brandName.toLowerCase().includes(normalized) ||
 				report.originalContent.toLowerCase().includes(normalized) ||
 				report.summary.toLowerCase().includes(normalized);
-			const matchesVerdict = verdict === "all" || report.verdict === verdict;
+			const matchesVerdict =
+				verdict === "all" ||
+				(isCompletedAuditReport(report) && report.verdict === verdict);
 			const matchesType =
 				contentType === "all" || report.contentType === contentType;
 			return matchesQuery && matchesVerdict && matchesType;
@@ -155,13 +158,17 @@ export function ReportHistoryTable({
 										{CONTENT_TYPE_LABELS[report.contentType]}
 									</TableCell>
 									<TableCell>
-										<ScoreDisplay
-											score={report.score}
-											size="sm"
-										/>
+										{isCompletedAuditReport(report) ? (
+											<ScoreDisplay
+												score={report.score}
+												size="sm"
+											/>
+										) : (
+											<span className="text-muted-foreground">Pending</span>
+										)}
 									</TableCell>
 									<TableCell>
-										<StatusBadge verdict={report.verdict} />
+										<AuditReportStatusBadge report={report} />
 									</TableCell>
 									<TableCell className="max-w-xs text-muted-foreground whitespace-normal">
 										{report.summary}

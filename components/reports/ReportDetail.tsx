@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowLeft, FileText } from "lucide-react";
+import { AlertCircle, ArrowLeft, FileText } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,6 +20,9 @@ import { formatDate } from "@/lib/format";
 import type { AuditReport } from "@/lib/types";
 
 export function ReportDetail({ report }: { report: AuditReport }) {
+  const isProcessing = report.status === "processing";
+  const isFailed = report.status === "failed";
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap gap-2">
@@ -36,6 +40,27 @@ export function ReportDetail({ report }: { report: AuditReport }) {
         </Button>
       </div>
 
+      {isProcessing ? (
+        <Alert>
+          <FileText className="size-4" />
+          <AlertTitle>Audit processing</AlertTitle>
+          <AlertDescription>
+            The report has been created. AI scoring and findings will appear
+            here when processing completes.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
+      {isFailed ? (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertTitle>Audit failed</AlertTitle>
+          <AlertDescription>
+            {report.error ?? "The audit failed before scoring completed."}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       <Card className="rounded-lg">
         <CardHeader className="gap-4 sm:grid-cols-[1fr_auto]">
           <div>
@@ -45,10 +70,12 @@ export function ReportDetail({ report }: { report: AuditReport }) {
               {formatDate(report.createdAt)}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <ScoreDisplay score={report.score} size="lg" />
-            <StatusBadge verdict={report.verdict} />
-          </div>
+          {!isProcessing && !isFailed ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <ScoreDisplay score={report.score} size="lg" />
+              <StatusBadge verdict={report.verdict} />
+            </div>
+          ) : null}
         </CardHeader>
         <CardContent>
           <p className="text-sm leading-6 text-muted-foreground">
@@ -68,37 +95,41 @@ export function ReportDetail({ report }: { report: AuditReport }) {
         </CardContent>
       </Card>
 
-      <Card className="rounded-lg">
-        <CardHeader>
-          <CardTitle>Score breakdown</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <DimensionScores scores={report.dimensionScores} />
-        </CardContent>
-      </Card>
+      {!isProcessing && !isFailed ? (
+        <>
+          <Card className="rounded-lg">
+            <CardHeader>
+              <CardTitle>Score breakdown</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DimensionScores scores={report.dimensionScores} />
+            </CardContent>
+          </Card>
 
-      <Card className="rounded-lg">
-        <CardHeader>
-          <CardTitle>Findings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FlaggedSentenceList flags={report.flaggedSentences} />
-        </CardContent>
-      </Card>
+          <Card className="rounded-lg">
+            <CardHeader>
+              <CardTitle>Findings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FlaggedSentenceList flags={report.flaggedSentences} />
+            </CardContent>
+          </Card>
 
-      <Card className="rounded-lg">
-        <CardHeader>
-          <CardTitle>Rewrite</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          <RewritePanel rewrite={report.rewriteSuggestion} />
-          <Separator />
-          <OriginalRewriteComparison
-            original={report.originalContent}
-            rewrite={report.rewriteSuggestion}
-          />
-        </CardContent>
-      </Card>
+          <Card className="rounded-lg">
+            <CardHeader>
+              <CardTitle>Rewrite</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <RewritePanel rewrite={report.rewriteSuggestion} />
+              <Separator />
+              <OriginalRewriteComparison
+                original={report.originalContent}
+                rewrite={report.rewriteSuggestion}
+              />
+            </CardContent>
+          </Card>
+        </>
+      ) : null}
     </div>
   );
 }

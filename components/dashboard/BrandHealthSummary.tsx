@@ -7,8 +7,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { StatusBadge } from "@/components/shared/StatusBadge";
+import { AuditReportStatusBadge } from "@/components/shared/AuditReportStatusBadge";
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay";
+import { isCompletedAuditReport } from "@/lib/audit-report";
 import type { AuditReport } from "@/lib/types";
 
 type BrandHealthItem = {
@@ -44,8 +45,10 @@ export function BrandHealthSummary({
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <ScoreDisplay score={averageScore} size="sm" />
-              {latestReport ? <StatusBadge verdict={latestReport.verdict} /> : null}
+              {latestReport && isCompletedAuditReport(latestReport) ? (
+                <ScoreDisplay score={averageScore} size="sm" />
+              ) : null}
+              {latestReport ? <AuditReportStatusBadge report={latestReport} /> : null}
               {latestReport ? (
                 <Button
                   variant="outline"

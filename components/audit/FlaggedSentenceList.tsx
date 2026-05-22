@@ -34,6 +34,11 @@ export function FlaggedSentenceList({
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             {flag.reason}
           </p>
+          {flag.evidence ? (
+            <p className="mt-2 rounded-md border bg-background/60 p-3 text-sm leading-6 text-muted-foreground">
+              {flag.evidence}
+            </p>
+          ) : null}
         </div>
       ))}
     </div>

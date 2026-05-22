@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, CheckCircle2, Play } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { AlertCircle, Play } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -25,37 +26,34 @@ import { BrandSelector } from "@/components/brands/BrandSelector";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { CONTENT_TYPE_LABELS, CONTENT_TYPES } from "@/lib/constants";
 import type { ContentType } from "@/lib/types";
-import { AuditResult } from "./AuditResult";
+import { normalizeBrandRagStatus } from "@/lib/brand-status";
 
 export function AuditForm() {
+  const router = useRouter();
   const brands = useQuery(api.brand.listBrands);
   const createManualAudit = useMutation(api.audit.createManualAudit);
   const [brandId, setBrandId] = useState<Id<"brands"> | "">("");
-  const [currentReportId, setCurrentReportId] =
-    useState<Id<"auditReports"> | null>(null);
   const [contentType, setContentType] = useState<ContentType>("generic");
   const [content, setContent] = useState(
     "This campaign helps teams move faster with confident messaging, clearer priorities, and less review friction before launch."
   );
-  const [status, setStatus] = useState<"idle" | "processing" | "complete" | "failed">(
-    "idle"
-  );
-  const report = useQuery(
-    api.report.getReportWithFindings,
-    currentReportId ? { reportId: currentReportId } : "skip"
-  );
+  const [status, setStatus] = useState<"idle" | "processing" | "failed">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const activeBrandId = brandId || brands?.[0]?._id || "";
+  const readyBrands =
+    brands?.filter((brand) => normalizeBrandRagStatus(brand.ragStatus) === "ready") ??
+    [];
+  const activeBrandId = brandId || readyBrands[0]?._id || "";
 
   async function analyze() {
     if (!activeBrandId || !content.trim()) {
       setStatus("failed");
-      setCurrentReportId(null);
+      setErrorMessage("Select a ready brand and add text before running an audit.");
       return;
     }
 
     setStatus("processing");
-    setCurrentReportId(null);
+    setErrorMessage("");
 
     try {
       const result = await createManualAudit({
@@ -63,9 +61,11 @@ export function AuditForm() {
         contentType,
         content,
       });
-      setCurrentReportId(result.reportId);
-      setStatus("complete");
-    } catch {
+      router.push(`/reports/${result.reportId}`);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "Audit processing failed."
+      );
       setStatus("failed");
     }
   }
@@ -88,6 +88,7 @@ export function AuditForm() {
                 brands={brands}
                 value={activeBrandId}
                 onValueChange={setBrandId}
+                readyOnly
               />
             ) : (
               <div className="rounded-lg border border-dashed px-2.5 py-2 text-sm text-muted-foreground">
@@ -126,47 +127,45 @@ export function AuditForm() {
           </label>
           <Button
             onClick={analyze}
-            disabled={status === "processing" || brands === undefined}
+            disabled={
+              status === "processing" ||
+              brands === undefined ||
+              !readyBrands.length
+            }
           >
             <Play className="size-4" />
-            Analyze
+            {status === "processing" ? "Starting audit" : "Analyze"}
           </Button>
         </CardContent>
       </Card>
 
       <div className="space-y-4">
-        {status === "failed" ? (
-          <Alert variant="destructive">
+        {brands !== undefined && brands.length > 0 && !readyBrands.length ? (
+          <Alert>
             <AlertCircle className="size-4" />
-            <AlertTitle>Audit needs content</AlertTitle>
+            <AlertTitle>No ready brands</AlertTitle>
             <AlertDescription>
-              Select a brand and add text before running the mock analysis.
+              Brand constitutions must finish RAG indexing before they can be
+              used for audits.
             </AlertDescription>
           </Alert>
         ) : null}
-        {status === "processing" ||
-        (status === "complete" && currentReportId && report === undefined) ? (
-          <LoadingState label="Analyzing content" />
+        {status === "failed" ? (
+          <Alert variant="destructive">
+            <AlertCircle className="size-4" />
+            <AlertTitle>Audit could not start</AlertTitle>
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
         ) : null}
-        {status === "complete" && report ? (
-          <>
-            <Alert>
-              <CheckCircle2 className="size-4" />
-              <AlertTitle>Report saved</AlertTitle>
-              <AlertDescription>
-                The audit report has been persisted in Convex and is available
-                in report history.
-              </AlertDescription>
-            </Alert>
-            <AuditResult report={report} />
-          </>
+        {status === "processing" ? (
+          <LoadingState label="Creating report" />
         ) : null}
         {status === "idle" ? (
           <div className="rounded-lg border border-dashed bg-muted/30 p-8">
             <h2 className="text-sm font-medium">Current report result</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Run an audit to see the coherence score, verdict, flagged
-              sentences, reasons, and rewrite suggestion.
+              Run an audit to create a report. You will be taken to the report
+              detail page while the AI scoring finishes.
             </p>
           </div>
         ) : null}
