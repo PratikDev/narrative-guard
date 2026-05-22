@@ -10,6 +10,8 @@
 
 import type * as audit from "../audit.js";
 import type * as brand from "../brand.js";
+import type * as lib_auditPrompts from "../lib/auditPrompts.js";
+import type * as lib_auditScoring from "../lib/auditScoring.js";
 import type * as rag from "../rag.js";
 import type * as report from "../report.js";
 
@@ -22,6 +24,8 @@ import type {
 declare const fullApi: ApiFromModules<{
   audit: typeof audit;
   brand: typeof brand;
+  "lib/auditPrompts": typeof lib_auditPrompts;
+  "lib/auditScoring": typeof lib_auditScoring;
   rag: typeof rag;
   report: typeof report;
 }>;

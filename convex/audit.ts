@@ -3,13 +3,18 @@ import { generateText, Output } from "ai";
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "./_generated/api";
-import type { Doc } from "./_generated/dataModel";
 import {
   internalAction,
   internalMutation,
   internalQuery,
   mutation,
 } from "./_generated/server";
+import {
+  calculateFinalAuditScore,
+  clampScore,
+  verdictFromScore,
+} from "./lib/auditScoring";
+import { buildAuditPrompt } from "./lib/auditPrompts";
 import { brandNamespace, brandRag } from "./rag";
 
 const contentType = v.union(
@@ -22,8 +27,6 @@ const contentType = v.union(
 );
 
 const auditResultSchema = z.object({
-  score: z.number().min(0).max(100),
-  verdict: z.enum(["on_brand", "needs_review", "off_brand"]),
   summary: z.string().min(1),
   toneAlignment: z.number().min(0).max(100),
   messagingAlignment: z.number().min(0).max(100),
@@ -37,38 +40,16 @@ const auditResultSchema = z.object({
       reason: z.string().min(1),
       evidence: z.string().min(1),
       severity: z.enum(["low", "medium", "high"]),
+      issueType: z.enum([
+        "mild_style",
+        "hype_phrase",
+        "banned_phrase",
+        "absolute_claim",
+        "direct_contradiction",
+      ]),
     })
   ),
 });
-
-function clampScore(score: number) {
-  return Math.max(0, Math.min(100, Math.round(score)));
-}
-
-function buildAuditPrompt(args: {
-  brand: Doc<"brands">;
-  contentType: Doc<"auditReports">["contentType"];
-  content: string;
-  ragContext: string;
-}) {
-  return `Evaluate the submitted content against the retrieved brand constitution.
-
-Brand: ${args.brand.name}
-Content type: ${args.contentType}
-
-Retrieved brand constitution context:
-${args.ragContext || "No relevant context was retrieved."}
-
-Submitted content:
-${args.content}
-
-Scoring rules:
-- Return a 0-100 score where 85-100 is on_brand, 65-84 is needs_review, and 0-64 is off_brand.
-- Score only against the retrieved constitution context and the submitted content.
-- Findings must quote exact submitted content in "sentence".
-- Evidence must cite the relevant constitution rule or guidance from the retrieved context.
-- Keep the rewrite suggestion publish-ready and aligned with the constitution.`;
-}
 
 export const createManualAudit = mutation({
   args: {
@@ -247,10 +228,35 @@ export const processManualAudit = internalAction({
           schema: auditResultSchema,
         }),
       });
+      const dimensions = {
+        toneAlignment: result.toneAlignment,
+        messagingAlignment: result.messagingAlignment,
+        bannedPhraseSafety: result.bannedPhraseSafety,
+        audienceFit: result.audienceFit,
+        clarityAndTrust: result.clarityAndTrust,
+      };
+      const score = calculateFinalAuditScore({
+        dimensions,
+        findings: result.findings,
+      });
 
       await ctx.runMutation(internal.audit.completeAudit, {
         reportId: args.reportId,
-        ...result,
+        score,
+        verdict: verdictFromScore(score),
+        summary: result.summary,
+        toneAlignment: result.toneAlignment,
+        messagingAlignment: result.messagingAlignment,
+        bannedPhraseSafety: result.bannedPhraseSafety,
+        audienceFit: result.audienceFit,
+        clarityAndTrust: result.clarityAndTrust,
+        rewriteSuggestion: result.rewriteSuggestion,
+        findings: result.findings.map((finding) => ({
+          sentence: finding.sentence,
+          reason: finding.reason,
+          evidence: finding.evidence,
+          severity: finding.severity,
+        })),
       });
     } catch (error) {
       await ctx.runMutation(internal.audit.failAudit, {
