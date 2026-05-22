@@ -16,6 +16,7 @@ export type FlaggedSentence = {
   id: string;
   sentence: string;
   reason: string;
+  evidence?: string;
   severity: Doc<"auditFindings">["severity"];
 };
 
@@ -32,6 +33,7 @@ export type AuditReport = {
   flaggedSentences: FlaggedSentence[];
   rewriteSuggestion: string;
   status: AuditStatus;
+  error?: string;
   createdAt: number;
   updatedAt: number;
 };

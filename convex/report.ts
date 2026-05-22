@@ -28,10 +28,12 @@ function toUiReport(
       id: finding._id,
       sentence: finding.sentence,
       reason: finding.reason,
+      evidence: finding.evidence,
       severity: finding.severity,
     })),
     rewriteSuggestion: report.rewriteSuggestion,
     status: report.status,
+    error: report.error,
     createdAt: report.createdAt,
     updatedAt: report.updatedAt,
   };
@@ -81,23 +83,24 @@ export const getDashboardStats = query({
   args: {},
   handler: async (ctx) => {
     const reports = await ctx.db.query("auditReports").collect();
-    const totalReports = reports.length;
-    const averageScore = totalReports
+    const completeReports = reports.filter((report) => report.status === "complete");
+    const averageScore = completeReports.length
       ? Math.round(
-          reports.reduce((total, report) => total + report.score, 0) /
-            totalReports
+          completeReports.reduce((total, report) => total + report.score, 0) /
+            completeReports.length
         )
       : 0;
 
     return {
-      totalReports,
+      totalReports: reports.length,
       averageScore,
-      needsReviewCount: reports.filter(
+      needsReviewCount: completeReports.filter(
         (report) => report.verdict === "needs_review"
       ).length,
-      offBrandCount: reports.filter((report) => report.verdict === "off_brand")
-        .length,
-      onBrandCount: reports.filter((report) => report.verdict === "on_brand")
+      offBrandCount: completeReports.filter(
+        (report) => report.verdict === "off_brand"
+      ).length,
+      onBrandCount: completeReports.filter((report) => report.verdict === "on_brand")
         .length,
     };
   },
@@ -116,10 +119,13 @@ export const getBrandHealth = query({
           .order("desc")
           .collect();
 
-        const averageScore = reports.length
+        const completeReports = reports.filter(
+          (report) => report.status === "complete"
+        );
+        const averageScore = completeReports.length
           ? Math.round(
-              reports.reduce((total, report) => total + report.score, 0) /
-                reports.length
+              completeReports.reduce((total, report) => total + report.score, 0) /
+                completeReports.length
             )
           : 0;
 
