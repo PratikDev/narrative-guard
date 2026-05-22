@@ -23,6 +23,13 @@ const auditStatus = v.union(
   v.literal("failed")
 );
 
+const ragStatus = v.union(
+  v.literal("not_indexed"),
+  v.literal("indexing"),
+  v.literal("ready"),
+  v.literal("failed")
+);
+
 const findingSeverity = v.union(
   v.literal("low"),
   v.literal("medium"),
@@ -41,18 +48,13 @@ export default defineSchema({
   brands: defineTable({
     name: v.string(),
     constitution: v.string(),
+    ragStatus: v.optional(ragStatus),
+    ragError: v.optional(v.string()),
+    ragEntryId: v.optional(v.string()),
+    ragIndexedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }),
-
-  constitutionChunks: defineTable({
-    brandId: v.id("brands"),
-    chunkIndex: v.number(),
-    text: v.string(),
-    embedding: v.optional(v.array(v.float64())),
-    createdAt: v.number(),
-  })
-    .index("by_brand", ["brandId"]),
 
   auditReports: defineTable({
     brandId: v.id("brands"),
@@ -82,6 +84,7 @@ export default defineSchema({
     brandId: v.id("brands"),
     sentence: v.string(),
     reason: v.string(),
+    evidence: v.optional(v.string()),
     severity: findingSeverity,
     createdAt: v.number(),
   })

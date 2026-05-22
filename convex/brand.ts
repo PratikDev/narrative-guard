@@ -1,6 +1,14 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import { replaceConstitutionChunksForBrand } from "./lib/constitutionChunking";
+import { internal } from "./_generated/api";
+import {
+  internalAction,
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from "./_generated/server";
+import type { EntryId } from "@convex-dev/rag";
+import { BRAND_CONSTITUTION_KEY, brandNamespace, brandRag } from "./rag";
 
 export const createBrand = mutation({
   args: {
@@ -13,19 +21,17 @@ export const createBrand = mutation({
     const brandId = await ctx.db.insert("brands", {
       name: args.name.trim(),
       constitution: args.constitution.trim(),
+      ragStatus: "indexing",
       createdAt: now,
       updatedAt: now,
     });
 
-    const chunkResult = await replaceConstitutionChunksForBrand(
-      ctx,
+    await ctx.scheduler.runAfter(0, internal.brand.ingestBrandConstitution, {
       brandId,
-      args.constitution
-    );
+    });
 
     return {
       brandId,
-      chunkCount: chunkResult.chunkCount,
     };
   },
 });
@@ -40,18 +46,17 @@ export const updateBrand = mutation({
     await ctx.db.patch(args.brandId, {
       name: args.name.trim(),
       constitution: args.constitution.trim(),
+      ragStatus: "indexing",
+      ragError: undefined,
       updatedAt: Date.now(),
     });
 
-    const chunkResult = await replaceConstitutionChunksForBrand(
-      ctx,
-      args.brandId,
-      args.constitution
-    );
+    await ctx.scheduler.runAfter(0, internal.brand.ingestBrandConstitution, {
+      brandId: args.brandId,
+    });
 
     return {
       brandId: args.brandId,
-      chunkCount: chunkResult.chunkCount,
     };
   },
 });
@@ -69,5 +74,98 @@ export const listBrands = query({
   args: {},
   handler: async (ctx) => {
     return await ctx.db.query("brands").order("desc").collect();
+  },
+});
+
+export const getBrandForIngestion = internalQuery({
+  args: {
+    brandId: v.id("brands"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.brandId);
+  },
+});
+
+export const markBrandRagReady = internalMutation({
+  args: {
+    brandId: v.id("brands"),
+    ragEntryId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const brand = await ctx.db.get(args.brandId);
+    if (!brand) return null;
+
+    await ctx.db.patch(args.brandId, {
+      ragStatus: "ready",
+      ragEntryId: args.ragEntryId,
+      ragIndexedAt: Date.now(),
+      ragError: undefined,
+      updatedAt: Date.now(),
+    });
+
+    return null;
+  },
+});
+
+export const markBrandRagFailed = internalMutation({
+  args: {
+    brandId: v.id("brands"),
+    error: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const brand = await ctx.db.get(args.brandId);
+    if (!brand) return null;
+
+    await ctx.db.patch(args.brandId, {
+      ragStatus: "failed",
+      ragError: args.error,
+      updatedAt: Date.now(),
+    });
+
+    return null;
+  },
+});
+
+export const ingestBrandConstitution = internalAction({
+  args: {
+    brandId: v.id("brands"),
+  },
+  handler: async (ctx, args) => {
+    const brand = await ctx.runQuery(internal.brand.getBrandForIngestion, {
+      brandId: args.brandId,
+    });
+
+    if (!brand) return null;
+
+    try {
+      const result = await brandRag.add(ctx, {
+        namespace: brandNamespace(args.brandId),
+        key: BRAND_CONSTITUTION_KEY,
+        title: `${brand.name} Brand Constitution`,
+        text: brand.constitution,
+        metadata: {
+          brandId: args.brandId,
+          source: "brand_constitution",
+        },
+      });
+
+      if (result.replacedEntry) {
+        await brandRag.delete(ctx, {
+          entryId: result.replacedEntry.entryId as EntryId,
+        });
+      }
+
+      await ctx.runMutation(internal.brand.markBrandRagReady, {
+        brandId: args.brandId,
+        ragEntryId: result.entryId,
+      });
+    } catch (error) {
+      await ctx.runMutation(internal.brand.markBrandRagFailed, {
+        brandId: args.brandId,
+        error: error instanceof Error ? error.message : "RAG indexing failed.",
+      });
+    }
+
+    return null;
   },
 });

@@ -10,8 +10,7 @@
 
 import type * as audit from "../audit.js";
 import type * as brand from "../brand.js";
-import type * as constitution from "../constitution.js";
-import type * as lib_constitutionChunking from "../lib/constitutionChunking.js";
+import type * as rag from "../rag.js";
 import type * as report from "../report.js";
 
 import type {
@@ -23,8 +22,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   audit: typeof audit;
   brand: typeof brand;
-  constitution: typeof constitution;
-  "lib/constitutionChunking": typeof lib_constitutionChunking;
+  rag: typeof rag;
   report: typeof report;
 }>;
 
@@ -54,4 +52,6 @@ export declare const internal: FilterApi<
   FunctionReference<any, "internal">
 >;
 
-export declare const components: {};
+export declare const components: {
+  rag: import("@convex-dev/rag/_generated/component.js").ComponentApi<"rag">;
+};
