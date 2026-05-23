@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { query } from "./_generated/server";
+import { requireAuthUserId } from "./lib/requireAuth";
 
 function toUiReport(
   report: Doc<"auditReports">,
@@ -41,23 +42,32 @@ function toUiReport(
 
 async function getFindingsByReport(
   ctx: QueryCtx,
-  reportId: Doc<"auditReports">["_id"]
+  reportId: Doc<"auditReports">["_id"],
+  userId: Doc<"users">["_id"]
 ) {
-  return await ctx.db
+  const findings = await ctx.db
     .query("auditFindings")
     .withIndex("by_report", (q) => q.eq("reportId", reportId))
     .collect();
+
+  return findings.filter((finding) => finding.userId === userId);
 }
 
 export const listReports = query({
   args: {},
   handler: async (ctx) => {
-    const reports = await ctx.db.query("auditReports").order("desc").collect();
+    const userId = await requireAuthUserId(ctx);
+
+    const reports = await ctx.db
+      .query("auditReports")
+      .withIndex("by_user_created", (q) => q.eq("userId", userId))
+      .order("desc")
+      .collect();
 
     return await Promise.all(
       reports.map(async (report) => {
         const brand = await ctx.db.get(report.brandId);
-        const findings = await getFindingsByReport(ctx, report._id);
+        const findings = await getFindingsByReport(ctx, report._id, userId);
         return toUiReport(report, brand, findings);
       })
     );
@@ -69,11 +79,13 @@ export const getReportWithFindings = query({
     reportId: v.id("auditReports"),
   },
   handler: async (ctx, args) => {
+    const userId = await requireAuthUserId(ctx);
+
     const report = await ctx.db.get(args.reportId);
-    if (!report) return null;
+    if (!report || report.userId !== userId) return null;
 
     const brand = await ctx.db.get(report.brandId);
-    const findings = await getFindingsByReport(ctx, report._id);
+    const findings = await getFindingsByReport(ctx, report._id, userId);
 
     return toUiReport(report, brand, findings);
   },
@@ -82,7 +94,12 @@ export const getReportWithFindings = query({
 export const getDashboardStats = query({
   args: {},
   handler: async (ctx) => {
-    const reports = await ctx.db.query("auditReports").collect();
+    const userId = await requireAuthUserId(ctx);
+
+    const reports = await ctx.db
+      .query("auditReports")
+      .withIndex("by_user_created", (q) => q.eq("userId", userId))
+      .collect();
     const completeReports = reports.filter((report) => report.status === "complete");
     const averageScore = completeReports.length
       ? Math.round(
@@ -109,7 +126,12 @@ export const getDashboardStats = query({
 export const getBrandHealth = query({
   args: {},
   handler: async (ctx) => {
-    const brands = await ctx.db.query("brands").collect();
+    const userId = await requireAuthUserId(ctx);
+
+    const brands = await ctx.db
+      .query("brands")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
 
     return await Promise.all(
       brands.map(async (brand) => {

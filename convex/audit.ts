@@ -15,6 +15,7 @@ import {
   verdictFromScore,
 } from "./lib/auditScoring";
 import { buildAuditPrompt } from "./lib/auditPrompts";
+import { requireAuthUserId } from "./lib/requireAuth";
 import { brandNamespace, brandRag } from "./rag";
 
 const contentType = v.union(
@@ -58,8 +59,10 @@ export const createManualAudit = mutation({
     content: v.string(),
   },
   handler: async (ctx, args) => {
+    const userId = await requireAuthUserId(ctx);
+
     const brand = await ctx.db.get(args.brandId);
-    if (!brand) {
+    if (!brand || brand.userId !== userId) {
       throw new Error("Brand not found.");
     }
     if (brand.ragStatus !== "ready") {
@@ -70,6 +73,7 @@ export const createManualAudit = mutation({
     const content = args.content.trim();
 
     const reportId = await ctx.db.insert("auditReports", {
+      userId,
       brandId: args.brandId,
       contentType: args.contentType,
       originalContent: content,
@@ -161,6 +165,7 @@ export const completeAudit = internalMutation({
 
     for (const finding of args.findings) {
       await ctx.db.insert("auditFindings", {
+        userId: report.userId,
         reportId: args.reportId,
         brandId: report.brandId,
         sentence: finding.sentence,

@@ -8,6 +8,7 @@ import {
   query,
 } from "./_generated/server";
 import type { EntryId } from "@convex-dev/rag";
+import { requireAuthUserId } from "./lib/requireAuth";
 import { BRAND_CONSTITUTION_KEY, brandNamespace, brandRag } from "./rag";
 
 export const createBrand = mutation({
@@ -16,9 +17,12 @@ export const createBrand = mutation({
     constitution: v.string(),
   },
   handler: async (ctx, args) => {
+    const userId = await requireAuthUserId(ctx);
+
     const now = Date.now();
 
     const brandId = await ctx.db.insert("brands", {
+      userId,
       name: args.name.trim(),
       constitution: args.constitution.trim(),
       ragStatus: "indexing",
@@ -43,6 +47,12 @@ export const updateBrand = mutation({
     constitution: v.string(),
   },
   handler: async (ctx, args) => {
+    const userId = await requireAuthUserId(ctx);
+    const brand = await ctx.db.get(args.brandId);
+    if (!brand || brand.userId !== userId) {
+      throw new Error("Brand not found.");
+    }
+
     await ctx.db.patch(args.brandId, {
       name: args.name.trim(),
       constitution: args.constitution.trim(),
@@ -66,14 +76,25 @@ export const getBrand = query({
     brandId: v.id("brands"),
   },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.brandId);
+    const userId = await requireAuthUserId(ctx);
+
+    const brand = await ctx.db.get(args.brandId);
+    if (!brand || brand.userId !== userId) return null;
+
+    return brand;
   },
 });
 
 export const listBrands = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("brands").order("desc").collect();
+    const userId = await requireAuthUserId(ctx);
+
+    return await ctx.db
+      .query("brands")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .order("desc")
+      .collect();
   },
 });
 
