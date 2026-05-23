@@ -5,9 +5,12 @@ import {
 	Command,
 	FileText,
 	History,
+	LogOut,
 	ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
+import { useAuthActions } from "@convex-dev/auth/react";
+import { useQuery } from "convex/react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -21,13 +24,9 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { api } from "@/convex/_generated/api";
 
 const data = {
-	user: {
-		name: "John Doe",
-		email: "john@doe.com",
-		avatar: "/avatars/jd.jpg",
-	},
 	navItems: [
 		{
 			name: "Dashboard",
@@ -53,6 +52,8 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+	const user = useQuery(api.viewer.currentUser);
+
 	return (
 		<Sidebar
 			variant="inset"
@@ -89,13 +90,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			</SidebarContent>
 
 			<SidebarFooter>
-				<NavUser user={data.user} />
+				<NavUser
+					user={{
+						name: user?.name ?? "Signed in",
+						email: user?.email ?? "",
+						avatar: user?.image ?? "",
+					}}
+				/>
 			</SidebarFooter>
 		</Sidebar>
 	);
 }
 
-function NavUser({ user }: { user: typeof data.user }) {
+function NavUser({
+	user,
+}: {
+	user: { name: string; email: string; avatar: string };
+}) {
+	const { signOut } = useAuthActions();
+	const fallback = user.name
+		.split(" ")
+		.map((part) => part[0])
+		.join("")
+		.slice(0, 2)
+		.toUpperCase();
+
 	return (
 		<SidebarMenu>
 			<SidebarMenuItem>
@@ -108,12 +127,21 @@ function NavUser({ user }: { user: typeof data.user }) {
 							src={user.avatar}
 							alt={user.name}
 						/>
-						<AvatarFallback className="rounded-lg">JD</AvatarFallback>
+						<AvatarFallback className="rounded-lg">{fallback || "U"}</AvatarFallback>
 					</Avatar>
 					<div className="grid flex-1 text-left text-sm leading-tight">
 						<span className="truncate font-medium">{user.name}</span>
 						<span className="truncate text-xs">{user.email}</span>
 					</div>
+				</SidebarMenuButton>
+			</SidebarMenuItem>
+			<SidebarMenuItem>
+				<SidebarMenuButton
+					type="button"
+					onClick={() => void signOut()}
+				>
+					<LogOut />
+					<span>Sign out</span>
 				</SidebarMenuButton>
 			</SidebarMenuItem>
 		</SidebarMenu>

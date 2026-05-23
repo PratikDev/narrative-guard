@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { DM_Sans, Geist, Geist_Mono } from "next/font/google";
+import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 
-import { AppShell } from "@/components/layout/AppShell";
+import { AuthGate } from "@/components/auth/AuthGate";
 import { ConvexClientProvider } from "@/components/providers/ConvexClientProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
 	description: "AI brand voice coherence review for business teams",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
 	children,
 }: Readonly<{
 	children: React.ReactNode;
@@ -41,11 +42,13 @@ export default function RootLayout({
 			)}
 		>
 			<body className="min-h-full">
-				<ConvexClientProvider>
-					<TooltipProvider>
-						<AppShell>{children}</AppShell>
-					</TooltipProvider>
-				</ConvexClientProvider>
+				<ConvexAuthNextjsServerProvider>
+					<ConvexClientProvider>
+						<TooltipProvider>
+							<AuthGate>{children}</AuthGate>
+						</TooltipProvider>
+					</ConvexClientProvider>
+				</ConvexAuthNextjsServerProvider>
 			</body>
 		</html>
 	);
