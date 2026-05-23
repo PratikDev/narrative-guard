@@ -1,3 +1,4 @@
+import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
@@ -45,7 +46,10 @@ export const dimensionScores = v.object({
 });
 
 export default defineSchema({
+  ...authTables,
+
   brands: defineTable({
+    userId: v.optional(v.id("users")),
     name: v.string(),
     constitution: v.string(),
     ragStatus: v.optional(ragStatus),
@@ -54,9 +58,11 @@ export default defineSchema({
     ragIndexedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }),
+  })
+    .index("by_user", ["userId"]),
 
   auditReports: defineTable({
+    userId: v.optional(v.id("users")),
     brandId: v.id("brands"),
     contentType,
     originalContent: v.string(),
@@ -74,12 +80,15 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
+    .index("by_user_created", ["userId", "createdAt"])
     .index("by_brand_created", ["brandId", "createdAt"])
     .index("by_created", ["createdAt"])
     .index("by_verdict", ["verdict"])
+    .index("by_user_verdict", ["userId", "verdict"])
     .index("by_brand_verdict", ["brandId", "verdict"]),
 
   auditFindings: defineTable({
+    userId: v.optional(v.id("users")),
     reportId: v.id("auditReports"),
     brandId: v.id("brands"),
     sentence: v.string(),
@@ -88,6 +97,7 @@ export default defineSchema({
     severity: findingSeverity,
     createdAt: v.number(),
   })
+    .index("by_user", ["userId"])
     .index("by_report", ["reportId"])
     .index("by_brand", ["brandId"]),
 });
