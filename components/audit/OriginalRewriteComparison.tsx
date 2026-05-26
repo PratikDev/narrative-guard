@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CopyButton } from "@/components/shared/CopyButton";
 import { cn } from "@/lib/utils";
 import type { Change } from "diff";
 import { diffWordsWithSpace } from "diff";
@@ -83,7 +84,13 @@ function SideBySideComparison({
 				</p>
 			</section>
 			<section className="rounded-lg border border-success/30 bg-success/5 p-4">
-				<h3 className="text-sm font-medium">Rewritten</h3>
+				<div className="flex items-center justify-between gap-3">
+					<h3 className="text-sm font-medium">Rewritten</h3>
+					<CopyButton
+						content={rewrite}
+						label="Copy rewritten content"
+					/>
+				</div>
 				<p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
 					{rewrite}
 				</p>
