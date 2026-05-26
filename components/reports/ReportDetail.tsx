@@ -1,6 +1,11 @@
+import { AlertCircle, FileText } from "lucide-react";
+import Link from "next/link";
+
 import { DimensionScores } from "@/components/audit/DimensionScores";
 import { FlaggedSentenceList } from "@/components/audit/FlaggedSentenceList";
 import { OriginalRewriteComparison } from "@/components/audit/OriginalRewriteComparison";
+import { DeleteReportButton } from "@/components/reports/DeleteReportButton";
+import BackButton from "@/components/shared/BackButton";
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import {
@@ -12,12 +17,12 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import type { Id } from "@/convex/_generated/dataModel";
 import { CONTENT_TYPE_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
 import type { AuditReport } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { AlertCircle, ArrowLeft, FileText } from "lucide-react";
-import Link from "next/link";
 
 function getBrandDetailsBorderClass(verdict: AuditReport["verdict"]) {
 	if (verdict === "on_brand") {
@@ -38,22 +43,21 @@ export function ReportDetail({ report }: { report: AuditReport }) {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-wrap gap-2">
-				<Button
-					variant="outline"
-					asChild
-				>
-					<Link href="/history">
-						<ArrowLeft className="size-4" />
-						Back to history
-					</Link>
-				</Button>
-				<Button asChild>
-					<Link href="/audit">
-						<FileText className="size-4" />
-						Run another audit
-					</Link>
-				</Button>
+			<div className="flex flex-wrap items-center justify-between gap-2">
+				<div className="flex flex-wrap gap-2">
+					<BackButton />
+					<Button asChild>
+						<Link href="/audit">
+							<FileText className="size-4" />
+							Run another audit
+						</Link>
+					</Button>
+				</div>
+				<DeleteReportButton
+					reportId={report.id as Id<"auditReports">}
+					redirectTo="/history"
+					showLabel
+				/>
 			</div>
 
 			{isProcessing ? (
@@ -124,12 +128,24 @@ export function ReportDetail({ report }: { report: AuditReport }) {
 					</Card>
 
 					<Card className="rounded-lg">
-						<CardHeader>
-							<CardTitle>Findings</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<FlaggedSentenceList flags={report.flaggedSentences} />
-						</CardContent>
+						<Accordion
+							type="single"
+							collapsible
+						>
+							<AccordionItem
+								value="findings"
+								className="border-b-0"
+							>
+								<CardHeader>
+									<AccordionTrigger className="py-0 hover:no-underline">
+										<CardTitle>Findings</CardTitle>
+									</AccordionTrigger>
+								</CardHeader>
+								<AccordionContent className="px-6 pt-6">
+									<FlaggedSentenceList flags={report.flaggedSentences} />
+								</AccordionContent>
+							</AccordionItem>
+						</Accordion>
 					</Card>
 
 					<Card className="rounded-lg">
@@ -146,7 +162,7 @@ export function ReportDetail({ report }: { report: AuditReport }) {
 										<CardTitle>Score breakdown</CardTitle>
 									</AccordionTrigger>
 								</CardHeader>
-								<AccordionContent className="p-6">
+								<AccordionContent className="px-6 pt-6">
 									<DimensionScores scores={report.dimensionScores} />
 								</AccordionContent>
 							</AccordionItem>

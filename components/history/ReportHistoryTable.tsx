@@ -4,6 +4,8 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { AuditReportStatusBadge } from "@/components/shared/AuditReportStatusBadge";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay";
+import { DeleteReportButton } from "@/components/reports/DeleteReportButton";
+import type { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -145,7 +147,7 @@ export function ReportHistoryTable({
 								<TableHead>Verdict</TableHead>
 								<TableHead>Summary</TableHead>
 								<TableHead>Date</TableHead>
-								<TableHead className="text-right">Action</TableHead>
+								<TableHead className="text-right">Actions</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -170,18 +172,25 @@ export function ReportHistoryTable({
 									<TableCell>
 										<AuditReportStatusBadge report={report} />
 									</TableCell>
-									<TableCell className="max-w-xs text-muted-foreground whitespace-normal">
-										{report.summary}
-									</TableCell>
+										<TableCell className="max-w-xs">
+											<p className="line-clamp-3 whitespace-normal text-muted-foreground">
+												{report.summary}
+											</p>
+										</TableCell>
 									<TableCell>{formatDate(report.createdAt)}</TableCell>
-									<TableCell className="text-right">
-										<Button
-											variant="outline"
-											size="sm"
-											asChild
-										>
-											<Link href={`/reports/${report.id}`}>Open report</Link>
-										</Button>
+									<TableCell>
+										<div className="flex justify-end gap-2">
+											<Button
+												variant="outline"
+												size="sm"
+												asChild
+											>
+												<Link href={`/reports/${report.id}`}>Open report</Link>
+											</Button>
+											<DeleteReportButton
+												reportId={report.id as Id<"auditReports">}
+											/>
+										</div>
 									</TableCell>
 								</TableRow>
 							))}
