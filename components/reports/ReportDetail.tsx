@@ -77,7 +77,7 @@ export function ReportDetail({ report }: { report: AuditReport }) {
 				</Alert>
 			) : null}
 
-			{/* Brand Details */}
+			{/* Report Summary */}
 			<Card
 				className={cn(
 					"rounded-lg",
