@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
-import { query } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { requireAuthUserId } from "./lib/requireAuth";
 
 function toUiReport(
@@ -88,6 +88,35 @@ export const getReportWithFindings = query({
     const findings = await getFindingsByReport(ctx, report._id, userId);
 
     return toUiReport(report, brand, findings);
+  },
+});
+
+export const deleteReport = mutation({
+  args: {
+    reportId: v.id("auditReports"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuthUserId(ctx);
+
+    const report = await ctx.db.get(args.reportId);
+    if (!report || report.userId !== userId) {
+      throw new Error("Report not found.");
+    }
+
+    const findings = await ctx.db
+      .query("auditFindings")
+      .withIndex("by_report", (q) => q.eq("reportId", args.reportId))
+      .collect();
+
+    await Promise.all(
+      findings
+        .filter((finding) => finding.userId === userId)
+        .map((finding) => ctx.db.delete(finding._id))
+    );
+
+    await ctx.db.delete(report._id);
+
+    return { reportId: report._id };
   },
 });
 
