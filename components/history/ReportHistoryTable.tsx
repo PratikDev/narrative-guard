@@ -8,11 +8,13 @@ import type { AuditReport } from "@/lib/types";
 type ReportHistoryTableProps = {
 	reports: AuditReport[];
 	loading?: boolean;
-	onScrollToBottom?: (numItems: number) => void;
+	isMoreDataAvailable: boolean;
+	onScrollToBottom?: () => void;
 };
 export function ReportHistoryTable({
 	reports,
 	loading = false,
+	isMoreDataAvailable,
 	onScrollToBottom,
 }: ReportHistoryTableProps) {
 	if (loading) {
@@ -33,6 +35,7 @@ export function ReportHistoryTable({
 	return (
 		<ReportHistoryDataTable
 			data={reports}
+			isMoreDataAvailable={isMoreDataAvailable}
 			onScrollToBottom={onScrollToBottom}
 		/>
 	);

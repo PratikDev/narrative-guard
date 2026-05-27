@@ -1,13 +1,15 @@
 // collected from [mantine-ui](https://github.com/mantinedev/mantine/blob/master/packages/@mantine/hooks/src/use-in-viewport/use-in-viewport.ts)
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from "react";
 
-export interface UseInViewportReturnValue<T extends HTMLElement = any> {
+export interface UseInViewportReturnValue<T extends HTMLElement = HTMLElement> {
   inViewport: boolean;
   ref: React.RefCallback<T | null>;
 }
 
-export function useInViewport<T extends HTMLElement = any>(): UseInViewportReturnValue<T> {
+export function useInViewport<
+  T extends HTMLElement = HTMLElement,
+>(): UseInViewportReturnValue<T> {
   const observer = useRef<IntersectionObserver | null>(null);
   const [inViewport, setInViewport] = useState(false);
 
@@ -29,8 +31,4 @@ export function useInViewport<T extends HTMLElement = any>(): UseInViewportRetur
   }, []);
 
   return { ref, inViewport };
-}
-
-export namespace useInViewport {
-  export type ReturnValue<T extends HTMLElement> = UseInViewportReturnValue<T>;
 }

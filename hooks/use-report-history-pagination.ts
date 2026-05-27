@@ -3,7 +3,7 @@
 import { api } from "@/convex/_generated/api";
 import { usePaginatedQuery } from "convex/react";
 
-const REPORTS_PAGE_SIZE = 10;
+const REPORTS_PAGE_SIZE = 20;
 
 export function useReportHistoryPagination() {
 	const { results, status, loadMore } = usePaginatedQuery(
@@ -19,10 +19,13 @@ export function useReportHistoryPagination() {
 	const isLoadingMore = status === "LoadingMore";
 	const isExhausted = status === "Exhausted";
 
+	const loadMoreReports = () => {
+		loadMore(REPORTS_PAGE_SIZE);
+	};
 
 	return {
 		results,
-		loadMore,
+		loadMoreReports,
 		isLoadingFirstPage,
 		isLoadingMore,
 		isExhausted,

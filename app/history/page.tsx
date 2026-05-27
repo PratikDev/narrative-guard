@@ -16,8 +16,11 @@ export default function HistoryPage() {
 
 			<ReportHistoryTable
 				onScrollToBottom={
-					pagination.canLoadMore ? pagination.loadMore : undefined
+					pagination.canLoadMore && !pagination.isLoadingMore
+						? pagination.loadMoreReports
+						: undefined
 				}
+				isMoreDataAvailable={pagination.isLoadingMore || pagination.canLoadMore}
 				reports={pagination.results}
 				loading={pagination.isLoadingFirstPage}
 			/>

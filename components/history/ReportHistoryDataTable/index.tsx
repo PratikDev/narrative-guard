@@ -1,6 +1,6 @@
 "use client";
 
-import { reportHistoryColumns } from "@/components/history/ReportHistoryColumns";
+import { useReportHistoryDataTable } from "@/components/history/ReportHistoryDataTable/use-report-history-data-table";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,63 +24,37 @@ import {
 	VERDICT_LABELS,
 	VERDICTS,
 } from "@/lib/constants";
-import type { AuditReport, ContentType, Verdict } from "@/lib/types";
-import {
-	type ColumnFiltersState,
-	type FilterFn,
-	flexRender,
-	getCoreRowModel,
-	getFilteredRowModel,
-	useReactTable,
-} from "@tanstack/react-table";
+import type { AuditReport } from "@/lib/types";
+import { flexRender } from "@tanstack/react-table";
 import { Search } from "lucide-react";
-import { useState } from "react";
 
 type ReportHistoryDataTableProps = {
 	data: AuditReport[];
-	onScrollToBottom?: (numItems: number) => void;
-};
-
-const reportSearchFilter: FilterFn<AuditReport> = (row, _columnId, value) => {
-	const query = String(value).trim().toLowerCase();
-
-	if (!query) return true;
-
-	const report = row.original;
-	return (
-		report.brandName.toLowerCase().includes(query) ||
-		report.originalContent.toLowerCase().includes(query) ||
-		report.summary.toLowerCase().includes(query)
-	);
+	isMoreDataAvailable: boolean;
+	onScrollToBottom?: () => void;
 };
 
 export function ReportHistoryDataTable({
 	data,
+	isMoreDataAvailable,
 	onScrollToBottom,
 }: ReportHistoryDataTableProps) {
-	const [globalFilter, setGlobalFilter] = useState("");
-	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-
-	const table = useReactTable({
+	const {
+		columnCount,
+		contentTypeFilter,
+		globalFilter,
+		rows,
+		scrollTriggerIndex,
+		scrollTriggerRef,
+		setContentTypeFilter,
+		setGlobalFilter,
+		setVerdictFilter,
+		table,
+		verdictFilter,
+	} = useReportHistoryDataTable({
 		data,
-		columns: reportHistoryColumns,
-		globalFilterFn: reportSearchFilter,
-		onColumnFiltersChange: setColumnFilters,
-		onGlobalFilterChange: setGlobalFilter,
-		getCoreRowModel: getCoreRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
-		state: {
-			columnFilters,
-			globalFilter,
-		},
+		onScrollToBottom,
 	});
-	const verdictFilter =
-		(table.getColumn("verdict")?.getFilterValue() as Verdict | undefined) ??
-		"all";
-	const contentTypeFilter =
-		(table.getColumn("contentType")?.getFilterValue() as
-			| ContentType
-			| undefined) ?? "all";
 
 	return (
 		<div className="space-y-4">
@@ -90,7 +64,7 @@ export function ReportHistoryDataTable({
 					<Search className="pointer-events-none absolute left-2.5 top-2 size-4 text-muted-foreground" />
 					<Input
 						value={globalFilter}
-						onChange={(event) => table.setGlobalFilter(event.target.value)}
+						onChange={(event) => setGlobalFilter(event.target.value)}
 						placeholder="Search by brand or content"
 						className="pl-8"
 					/>
@@ -98,11 +72,7 @@ export function ReportHistoryDataTable({
 
 				<Select
 					value={verdictFilter}
-					onValueChange={(value) => {
-						table
-							.getColumn("verdict")
-							?.setFilterValue(value === "all" ? undefined : value);
-					}}
+					onValueChange={setVerdictFilter}
 				>
 					<SelectTrigger className="w-full">
 						<SelectValue placeholder="Filter by verdict" />
@@ -122,11 +92,7 @@ export function ReportHistoryDataTable({
 
 				<Select
 					value={contentTypeFilter}
-					onValueChange={(value) => {
-						table
-							.getColumn("contentType")
-							?.setFilterValue(value === "all" ? undefined : value);
-					}}
+					onValueChange={setContentTypeFilter}
 				>
 					<SelectTrigger className="w-full">
 						<SelectValue placeholder="Filter by content type" />
@@ -145,7 +111,7 @@ export function ReportHistoryDataTable({
 				</Select>
 			</div>
 
-			{table.getRowModel().rows.length ? (
+			{rows.length ? (
 				<div className="overflow-x-auto rounded-lg border bg-card">
 					<Table containerClassName="h-[700px]">
 						<TableHeader>
@@ -169,8 +135,13 @@ export function ReportHistoryDataTable({
 						</TableHeader>
 
 						<TableBody>
-							{table.getRowModel().rows.map((row) => (
-								<TableRow key={row.id}>
+							{rows.map((row, index) => (
+								<TableRow
+									key={row.id}
+									ref={
+										index === scrollTriggerIndex ? scrollTriggerRef : undefined
+									}
+								>
 									{row.getVisibleCells().map((cell) => (
 										<TableCell key={cell.id}>
 											{flexRender(
@@ -181,6 +152,17 @@ export function ReportHistoryDataTable({
 									))}
 								</TableRow>
 							))}
+
+							{isMoreDataAvailable && (
+								<TableRow>
+									<TableCell
+										colSpan={columnCount}
+										className="text-center text-muted-foreground"
+									>
+										Loading More...
+									</TableCell>
+								</TableRow>
+							)}
 						</TableBody>
 					</Table>
 				</div>
