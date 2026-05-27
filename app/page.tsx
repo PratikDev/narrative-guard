@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FileText, ShieldCheck } from "lucide-react";
-import { useQuery } from "convex/react";
+import { usePaginatedQuery, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { BrandHealthSummary } from "@/components/dashboard/BrandHealthSummary";
@@ -12,7 +12,11 @@ import { PageHeader } from "@/components/shared/PageHeader";
 
 export default function Home() {
   const stats = useQuery(api.report.getDashboardStats);
-  const reports = useQuery(api.report.listReports);
+  const { results: reports } = usePaginatedQuery(
+    api.report.listReports,
+    {},
+    { initialNumItems: 5 }
+  );
   const health = useQuery(api.report.getBrandHealth);
 
   return (
@@ -49,7 +53,7 @@ export default function Home() {
         }
       />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.9fr)]">
-        <RecentReports reports={reports ?? []} />
+        <RecentReports reports={reports} />
         <BrandHealthSummary health={health ?? []} />
       </div>
     </div>

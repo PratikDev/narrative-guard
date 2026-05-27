@@ -1,3 +1,4 @@
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
@@ -54,23 +55,30 @@ async function getFindingsByReport(
 }
 
 export const listReports = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    paginationOpts: paginationOptsValidator,
+  },
+  handler: async (ctx, args) => {
     const userId = await requireAuthUserId(ctx);
 
     const reports = await ctx.db
       .query("auditReports")
       .withIndex("by_user_created", (q) => q.eq("userId", userId))
       .order("desc")
-      .collect();
+      .paginate(args.paginationOpts);
 
-    return await Promise.all(
-      reports.map(async (report) => {
+    const page = await Promise.all(
+      reports.page.map(async (report) => {
         const brand = await ctx.db.get(report.brandId);
         const findings = await getFindingsByReport(ctx, report._id, userId);
         return toUiReport(report, brand, findings);
       })
     );
+
+    return {
+      ...reports,
+      page,
+    };
   },
 });
 
