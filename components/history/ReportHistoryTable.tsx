@@ -5,13 +5,16 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingState } from "@/components/shared/LoadingState";
 import type { AuditReport } from "@/lib/types";
 
+type ReportHistoryTableProps = {
+	reports: AuditReport[];
+	loading?: boolean;
+	onScrollToBottom?: (numItems: number) => void;
+};
 export function ReportHistoryTable({
 	reports,
 	loading = false,
-}: {
-	reports: AuditReport[];
-	loading?: boolean;
-}) {
+	onScrollToBottom,
+}: ReportHistoryTableProps) {
 	if (loading) {
 		return <LoadingState label="Loading report history" />;
 	}
@@ -27,5 +30,10 @@ export function ReportHistoryTable({
 		);
 	}
 
-	return <ReportHistoryDataTable data={reports} />;
+	return (
+		<ReportHistoryDataTable
+			data={reports}
+			onScrollToBottom={onScrollToBottom}
+		/>
+	);
 }

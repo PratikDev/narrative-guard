@@ -38,6 +38,7 @@ import { useState } from "react";
 
 type ReportHistoryDataTableProps = {
 	data: AuditReport[];
+	onScrollToBottom?: (numItems: number) => void;
 };
 
 const reportSearchFilter: FilterFn<AuditReport> = (row, _columnId, value) => {
@@ -53,7 +54,10 @@ const reportSearchFilter: FilterFn<AuditReport> = (row, _columnId, value) => {
 	);
 };
 
-export function ReportHistoryDataTable({ data }: ReportHistoryDataTableProps) {
+export function ReportHistoryDataTable({
+	data,
+	onScrollToBottom,
+}: ReportHistoryDataTableProps) {
 	const [globalFilter, setGlobalFilter] = useState("");
 	const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
@@ -91,6 +95,7 @@ export function ReportHistoryDataTable({ data }: ReportHistoryDataTableProps) {
 						className="pl-8"
 					/>
 				</label>
+
 				<Select
 					value={verdictFilter}
 					onValueChange={(value) => {
@@ -114,6 +119,7 @@ export function ReportHistoryDataTable({ data }: ReportHistoryDataTableProps) {
 						))}
 					</SelectContent>
 				</Select>
+
 				<Select
 					value={contentTypeFilter}
 					onValueChange={(value) => {
@@ -141,12 +147,15 @@ export function ReportHistoryDataTable({ data }: ReportHistoryDataTableProps) {
 
 			{table.getRowModel().rows.length ? (
 				<div className="overflow-x-auto rounded-lg border bg-card">
-					<Table>
+					<Table containerClassName="h-[700px]">
 						<TableHeader>
 							{table.getHeaderGroups().map((headerGroup) => (
 								<TableRow key={headerGroup.id}>
 									{headerGroup.headers.map((header) => (
-										<TableHead key={header.id}>
+										<TableHead
+											key={header.id}
+											className="sticky top-0 z-10 bg-muted ring-1 ring-foreground"
+										>
 											{header.isPlaceholder
 												? null
 												: flexRender(
@@ -158,6 +167,7 @@ export function ReportHistoryDataTable({ data }: ReportHistoryDataTableProps) {
 								</TableRow>
 							))}
 						</TableHeader>
+
 						<TableBody>
 							{table.getRowModel().rows.map((row) => (
 								<TableRow key={row.id}>
