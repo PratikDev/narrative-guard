@@ -1,15 +1,21 @@
 import type { Doc } from "../_generated/dataModel";
+import type { AuditContentTypePolicy } from "./auditContentTypes";
 
 export function buildAuditPrompt(args: {
   brand: Doc<"brands">;
-  contentType: Doc<"auditReports">["contentType"];
+  contentTypePolicy: AuditContentTypePolicy;
   content: string;
   ragContext: string;
 }) {
   return `Evaluate the submitted content against the retrieved brand constitution.
 
 Brand: ${args.brand.name}
-Content type: ${args.contentType}
+Content type: ${args.contentTypePolicy.label}
+
+Content-type-specific audit standards:
+${args.contentTypePolicy.auditInstructions}
+
+Evaluate the submitted content according to the selected content type above, not as generic copy.
 
 Retrieved brand constitution context:
 ${args.ragContext || "No relevant context was retrieved."}

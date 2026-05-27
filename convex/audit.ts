@@ -14,6 +14,7 @@ import {
   clampScore,
   verdictFromScore,
 } from "./lib/auditScoring";
+import { getAuditContentTypePolicy } from "./lib/auditContentTypes";
 import { buildAuditPrompt } from "./lib/auditPrompts";
 import { requireAuthUserId } from "./lib/requireAuth";
 import { brandNamespace, brandRag } from "./rag";
@@ -212,6 +213,9 @@ export const processManualAudit = internalAction({
     if (!audit) return null;
 
     try {
+      const contentTypePolicy = getAuditContentTypePolicy(
+        audit.report.contentType
+      );
       const context = await brandRag.search(ctx, {
         namespace: brandNamespace(audit.brand._id),
         query: audit.report.originalContent,
@@ -225,7 +229,7 @@ export const processManualAudit = internalAction({
         temperature: 0.2,
         prompt: buildAuditPrompt({
           brand: audit.brand,
-          contentType: audit.report.contentType,
+          contentTypePolicy,
           content: audit.report.originalContent,
           ragContext: context.text,
         }),
@@ -243,6 +247,9 @@ export const processManualAudit = internalAction({
       const score = calculateFinalAuditScore({
         dimensions,
         findings: result.findings,
+        scoringWeights: contentTypePolicy.scoringWeights,
+        penaltyMultipliers: contentTypePolicy.penaltyMultipliers,
+        scoreCaps: contentTypePolicy.scoreCaps,
       });
 
       await ctx.runMutation(internal.audit.completeAudit, {

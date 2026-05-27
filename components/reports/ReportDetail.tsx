@@ -165,7 +165,10 @@ export function ReportDetail({ report }: { report: AuditReport }) {
 									</AccordionTrigger>
 								</CardHeader>
 								<AccordionContent className="px-6 pt-6">
-									<DimensionScores scores={report.dimensionScores} />
+									<DimensionScores
+										contentType={report.contentType}
+										scores={report.dimensionScores}
+									/>
 								</AccordionContent>
 							</AccordionItem>
 						</Accordion>

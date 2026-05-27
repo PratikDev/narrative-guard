@@ -32,7 +32,10 @@ export function AuditResult({ report }: { report: AuditReport }) {
         <Separator />
         <section>
           <h2 className="mb-4 text-sm font-medium">Dimension score breakdown</h2>
-          <DimensionScores scores={report.dimensionScores} />
+          <DimensionScores
+            contentType={report.contentType}
+            scores={report.dimensionScores}
+          />
         </section>
         <section>
           <h2 className="mb-3 text-sm font-medium">Flagged sentences and reasons</h2>

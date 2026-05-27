@@ -66,6 +66,10 @@ export const AUDIT_SCORE_CAPS = {
   multipleSevereIssues: 44,
 };
 
+export type AuditScoreCaps = typeof AUDIT_SCORE_CAPS;
+
+export type AuditPenaltyMultipliers = Record<AuditIssueType, number>;
+
 export const AUDIT_SCORE_FLOORS = {
   isolatedNonSevereIssues: 65,
 };
@@ -77,8 +81,11 @@ export function clampScore(score: number) {
 export function calculateFinalAuditScore(args: {
   dimensions: AuditDimensionScores;
   findings: AuditFindingForScoring[];
+  scoringWeights: AuditDimensionScores;
+  penaltyMultipliers: AuditPenaltyMultipliers;
+  scoreCaps: AuditScoreCaps;
 }) {
-  const baseScore = Object.entries(AUDIT_SCORE_WEIGHTS).reduce(
+  const baseScore = Object.entries(args.scoringWeights).reduce(
     (total, [dimension, weight]) =>
       total + args.dimensions[dimension as keyof AuditDimensionScores] * weight,
     0
@@ -86,7 +93,9 @@ export function calculateFinalAuditScore(args: {
 
   const penalty = args.findings.reduce(
     (total, finding) =>
-      total + AUDIT_FINDING_PENALTIES[finding.issueType][finding.severity],
+      total +
+      AUDIT_FINDING_PENALTIES[finding.issueType][finding.severity] *
+        args.penaltyMultipliers[finding.issueType],
     0
   );
 
@@ -100,19 +109,19 @@ export function calculateFinalAuditScore(args: {
     args.findings.length > 0 && severeFindings.length === 0;
 
   if (severeFindings.length >= 2) {
-    score = Math.min(score, AUDIT_SCORE_CAPS.multipleSevereIssues);
+    score = Math.min(score, args.scoreCaps.multipleSevereIssues);
   } else if (severeFindings.length === 1) {
-    score = Math.min(score, AUDIT_SCORE_CAPS.severeIssue);
+    score = Math.min(score, args.scoreCaps.severeIssue);
   } else if (
     args.findings.length === 1 &&
     args.findings[0]?.issueType === "banned_phrase"
   ) {
-    score = Math.min(score, AUDIT_SCORE_CAPS.oneBannedPhrase);
+    score = Math.min(score, args.scoreCaps.oneBannedPhrase);
   } else if (
     args.findings.length === 1 &&
     args.findings[0]?.issueType === "hype_phrase"
   ) {
-    score = Math.min(score, AUDIT_SCORE_CAPS.oneHypeIssue);
+    score = Math.min(score, args.scoreCaps.oneHypeIssue);
   }
 
   if (

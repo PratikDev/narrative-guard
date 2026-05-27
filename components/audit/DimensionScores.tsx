@@ -1,11 +1,14 @@
 import { Progress } from "@/components/ui/progress";
 import {
+  CONTENT_TYPE_SCORE_DIMENSION_WEIGHTS,
   SCORE_DIMENSION_DESCRIPTIONS,
   SCORE_DIMENSION_LABELS,
-  SCORE_DIMENSION_WEIGHTS,
   SCORE_DIMENSIONS,
 } from "@/lib/constants";
-import type { DimensionScores as DimensionScoresType } from "@/lib/types";
+import type {
+  ContentType,
+  DimensionScores as DimensionScoresType,
+} from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 function getDimensionTone(score: number) {
@@ -32,7 +35,15 @@ function getDimensionTone(score: number) {
   };
 }
 
-export function DimensionScores({ scores }: { scores: DimensionScoresType }) {
+export function DimensionScores({
+  contentType,
+  scores,
+}: {
+  contentType: ContentType;
+  scores: DimensionScoresType;
+}) {
+  const weights = CONTENT_TYPE_SCORE_DIMENSION_WEIGHTS[contentType];
+
   return (
     <div className="space-y-3">
       {SCORE_DIMENSIONS.map((dimension) => {
@@ -51,7 +62,7 @@ export function DimensionScores({ scores }: { scores: DimensionScoresType }) {
                     {SCORE_DIMENSION_LABELS[dimension]}
                   </h4>
                   <span className="rounded border px-1.5 py-0.5 text-xs text-muted-foreground">
-                    {SCORE_DIMENSION_WEIGHTS[dimension]}% weight
+                    {weights[dimension]}% weight
                   </span>
                   <span
                     className={cn(

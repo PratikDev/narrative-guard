@@ -35,12 +35,60 @@ export const SCORE_DIMENSION_DESCRIPTIONS: Record<ScoreDimension, string> = {
     "How clearly and credibly the content communicates without overstatement.",
 };
 
-export const SCORE_DIMENSION_WEIGHTS: Record<ScoreDimension, number> = {
-  toneAlignment: 25,
-  messagingAlignment: 25,
-  bannedPhraseSafety: 25,
-  audienceFit: 15,
-  clarityAndTrust: 10,
+// export const SCORE_DIMENSION_WEIGHTS: Record<ScoreDimension, number> = {
+//   toneAlignment: 25,
+//   messagingAlignment: 25,
+//   bannedPhraseSafety: 25,
+//   audienceFit: 15,
+//   clarityAndTrust: 10,
+// };
+
+export const CONTENT_TYPE_SCORE_DIMENSION_WEIGHTS: Record<
+  ContentType,
+  Record<ScoreDimension, number>
+> = {
+  generic: {
+    toneAlignment: 25,
+    messagingAlignment: 25,
+    bannedPhraseSafety: 25,
+    audienceFit: 15,
+    clarityAndTrust: 10,
+  },
+  social_post: {
+    toneAlignment: 30,
+    messagingAlignment: 20,
+    bannedPhraseSafety: 20,
+    audienceFit: 20,
+    clarityAndTrust: 10,
+  },
+  website_copy: {
+    toneAlignment: 20,
+    messagingAlignment: 30,
+    bannedPhraseSafety: 20,
+    audienceFit: 15,
+    clarityAndTrust: 15,
+  },
+  email: {
+    toneAlignment: 25,
+    messagingAlignment: 20,
+    bannedPhraseSafety: 20,
+    audienceFit: 20,
+    clarityAndTrust: 15,
+  },
+  press_release: {
+    toneAlignment: 15,
+    messagingAlignment: 20,
+    bannedPhraseSafety: 30,
+    audienceFit: 10,
+    clarityAndTrust: 25,
+  },
+  ad_copy: {
+    toneAlignment: 15,
+    messagingAlignment: 20,
+    bannedPhraseSafety: 35,
+    audienceFit: 10,
+    clarityAndTrust: 20,
+  },
 };
 
 export const CONTENT_TYPES = Object.keys(CONTENT_TYPE_LABELS) as ContentType[];
