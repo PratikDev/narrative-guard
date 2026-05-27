@@ -22,8 +22,9 @@ import { useMutation, useQuery } from "convex/react";
 import { AlertCircle, Play } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useSourceReportPrefill } from "./use-source-report-prefill";
 
-export function AuditForm() {
+export function AuditForm({ sourceReportId }: { sourceReportId?: string }) {
 	const router = useRouter();
 	const brands = useQuery(api.brand.listBrands);
 	const createManualAudit = useMutation(api.audit.createManualAudit);
@@ -34,6 +35,14 @@ export function AuditForm() {
 		"idle",
 	);
 	const [errorMessage, setErrorMessage] = useState("");
+	const sourceReportPrefill = useSourceReportPrefill({
+		sourceReportId,
+		onPrefill: (sourceReport) => {
+			setBrandId(sourceReport.brandId);
+			setContentType(sourceReport.contentType);
+			setContent(sourceReport.rewriteSuggestion);
+		},
+	});
 
 	const readyBrands =
 		brands?.filter(
@@ -141,6 +150,16 @@ export function AuditForm() {
 			</Card>
 
 			<div className="space-y-4">
+				{sourceReportPrefill.status === "loading" ? (
+					<LoadingState label="Loading source report" />
+				) : null}
+				{sourceReportPrefill.status === "failed" ? (
+					<Alert variant="destructive">
+						<AlertCircle className="size-4" />
+						<AlertTitle>Re-audit prefill unavailable</AlertTitle>
+						<AlertDescription>{sourceReportPrefill.message}</AlertDescription>
+					</Alert>
+				) : null}
 				{brands !== undefined && brands.length > 0 && !readyBrands.length ? (
 					<Alert>
 						<AlertCircle className="size-4" />

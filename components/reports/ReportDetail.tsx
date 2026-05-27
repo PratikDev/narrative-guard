@@ -47,9 +47,11 @@ export function ReportDetail({ report }: { report: AuditReport }) {
 				<div className="flex flex-wrap gap-2">
 					<BackButton />
 					<Button asChild>
-						<Link href="/audit">
+						<Link
+							href={`/audit?sourceReportId=${encodeURIComponent(report.id)}`}
+						>
 							<FileText className="size-4" />
-							Run another audit
+							Re-audit
 						</Link>
 					</Button>
 				</div>
