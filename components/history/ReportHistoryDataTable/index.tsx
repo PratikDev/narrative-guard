@@ -29,12 +29,14 @@ import { flexRender } from "@tanstack/react-table";
 import { Search } from "lucide-react";
 
 type ReportHistoryDataTableProps = {
+	canDeleteReports: boolean;
 	data: AuditReport[];
 	isMoreDataAvailable: boolean;
 	onScrollToBottom?: () => void;
 };
 
 export function ReportHistoryDataTable({
+	canDeleteReports,
 	data,
 	isMoreDataAvailable,
 	onScrollToBottom,
@@ -52,6 +54,7 @@ export function ReportHistoryDataTable({
 		table,
 		verdictFilter,
 	} = useReportHistoryDataTable({
+		canDeleteReports,
 		data,
 		onScrollToBottom,
 	});

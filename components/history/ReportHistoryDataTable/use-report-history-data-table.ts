@@ -1,6 +1,6 @@
 "use client";
 
-import { reportHistoryColumns } from "@/components/history/ReportHistoryColumns";
+import { getReportHistoryColumns } from "@/components/history/ReportHistoryColumns";
 import { useInViewport } from "@/hooks/use-in-viewport";
 import type { AuditReport, ContentType, Verdict } from "@/lib/types";
 import {
@@ -13,6 +13,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 type UseReportHistoryDataTableOptions = {
+	canDeleteReports: boolean;
 	data: AuditReport[];
 	onScrollToBottom?: () => void;
 };
@@ -31,6 +32,7 @@ const reportSearchFilter: FilterFn<AuditReport> = (row, _columnId, value) => {
 };
 
 export function useReportHistoryDataTable({
+	canDeleteReports,
 	data,
 	onScrollToBottom,
 }: UseReportHistoryDataTableOptions) {
@@ -39,6 +41,7 @@ export function useReportHistoryDataTable({
 	const lastTriggeredRowIdRef = useRef<string | null>(null);
 	const { ref: scrollTriggerRef, inViewport } =
 		useInViewport<HTMLTableRowElement>();
+	const reportHistoryColumns = getReportHistoryColumns({ canDeleteReports });
 
 	const table = useReactTable({
 		data,

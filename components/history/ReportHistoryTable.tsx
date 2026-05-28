@@ -6,12 +6,14 @@ import { LoadingState } from "@/components/shared/LoadingState";
 import type { AuditReport } from "@/lib/types";
 
 type ReportHistoryTableProps = {
+	canDeleteReports: boolean;
 	reports: AuditReport[];
 	loading?: boolean;
 	isMoreDataAvailable: boolean;
 	onScrollToBottom?: () => void;
 };
 export function ReportHistoryTable({
+	canDeleteReports,
 	reports,
 	loading = false,
 	isMoreDataAvailable,
@@ -34,6 +36,7 @@ export function ReportHistoryTable({
 
 	return (
 		<ReportHistoryDataTable
+			canDeleteReports={canDeleteReports}
 			data={reports}
 			isMoreDataAvailable={isMoreDataAvailable}
 			onScrollToBottom={onScrollToBottom}

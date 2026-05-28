@@ -1,4 +1,6 @@
 import { v } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
 import { requireAuthUserId } from "./lib/requireAuth";
 import {
@@ -13,6 +15,21 @@ const INVITE_EXPIRY_MS = 1000 * 60 * 60 * 24 * 7;
 
 function normalizeEmail(email: string) {
 	return email.trim().toLowerCase();
+}
+
+async function expireInviteIfNeeded(
+	ctx: MutationCtx,
+	invite: Doc<"workspaceInvites">,
+	now: number,
+) {
+	if (invite.status !== "pending" || invite.expiresAt >= now) return false;
+
+	await ctx.db.patch(invite._id, {
+		status: "expired",
+		updatedAt: now,
+	});
+
+	return true;
 }
 
 function createInviteToken() {
@@ -139,6 +156,7 @@ export const listInvites = query({
 	handler: async (ctx, args) => {
 		const userId = await requireAuthUserId(ctx);
 		await requireWorkspaceRole(ctx, args.workspaceId, userId, "admin");
+		const now = Date.now();
 
 		const invites = await ctx.db
 			.query("workspaceInvites")
@@ -146,7 +164,7 @@ export const listInvites = query({
 			.collect();
 
 		return invites
-			.filter((invite) => invite.status === "pending")
+			.filter((invite) => invite.status === "pending" && invite.expiresAt >= now)
 			.sort((a, b) => b.createdAt - a.createdAt);
 	},
 });
@@ -176,21 +194,40 @@ export const inviteMember = mutation({
 		if (!email) {
 			throw new Error("Email is required.");
 		}
+		const members = await ctx.db
+			.query("workspaceMembers")
+			.withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+			.collect();
+		for (const member of members) {
+			if (member.status !== "active") continue;
 
+			const memberUser = await ctx.db.get(member.userId);
+			if (memberUser?.email && normalizeEmail(memberUser.email) === email) {
+				throw new Error("This email is already an active workspace member.");
+			}
+		}
+
+		const now = Date.now();
 		const pendingInvites = await ctx.db
 			.query("workspaceInvites")
 			.withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
 			.collect();
-		const existingPendingInvite = pendingInvites.find(
-			(invite) => invite.email === email && invite.status === "pending",
-		);
+		for (const invite of pendingInvites) {
+			await expireInviteIfNeeded(ctx, invite, now);
+		}
+		const existingPendingInvite = pendingInvites.find((invite) => {
+			return (
+				invite.email === email &&
+				invite.status === "pending" &&
+				invite.expiresAt >= now
+			);
+		});
 		if (existingPendingInvite) {
 			throw new Error("This email already has a pending invite.");
 		}
 
 		const token = createInviteToken();
 		const tokenHash = await hashInviteToken(token);
-		const now = Date.now();
 		const inviteId = await ctx.db.insert("workspaceInvites", {
 			workspaceId: args.workspaceId,
 			email,
@@ -250,11 +287,8 @@ export const acceptInvite = mutation({
 		if (!invite || invite.status !== "pending") {
 			throw new Error("Invite is no longer valid.");
 		}
-		if (invite.expiresAt < Date.now()) {
-			await ctx.db.patch(invite._id, {
-				status: "expired",
-				updatedAt: Date.now(),
-			});
+		const now = Date.now();
+		if (await expireInviteIfNeeded(ctx, invite, now)) {
 			throw new Error("Invite has expired.");
 		}
 		if (user?.email && normalizeEmail(user.email) !== invite.email) {
@@ -267,9 +301,12 @@ export const acceptInvite = mutation({
 				q.eq("workspaceId", invite.workspaceId).eq("userId", userId),
 			)
 			.unique();
-		const now = Date.now();
 
 		if (existingMembership) {
+			if (existingMembership.status === "active") {
+				throw new Error("You are already a member of this workspace.");
+			}
+
 			await ctx.db.patch(existingMembership._id, {
 				role: invite.role,
 				status: "active",

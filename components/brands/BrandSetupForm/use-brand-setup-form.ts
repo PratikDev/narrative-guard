@@ -3,6 +3,7 @@
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
+import { canManageBrands } from "@/lib/workspace-permissions";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 
@@ -13,7 +14,8 @@ type UseBrandSetupFormOptions = {
 };
 
 export function useBrandSetupForm({ brand }: UseBrandSetupFormOptions) {
-	const { workspaceId } = useWorkspace();
+	const { activeMembership, workspaceId } = useWorkspace();
+	const canManageWorkspaceBrands = canManageBrands(activeMembership?.role);
 	const workspaceArgs = workspaceId ? { workspaceId } : {};
 	const brands = useQuery(api.brand.listBrands, workspaceArgs);
 	const createBrand = useMutation(api.brand.createBrand);
@@ -31,6 +33,11 @@ export function useBrandSetupForm({ brand }: UseBrandSetupFormOptions) {
 		null;
 
 	async function saveBrand() {
+		if (!canManageWorkspaceBrands) {
+			setState("error");
+			return;
+		}
+
 		if (!name.trim() || !constitution.trim()) {
 			setState("error");
 			return;
@@ -60,6 +67,7 @@ export function useBrandSetupForm({ brand }: UseBrandSetupFormOptions) {
 
 	return {
 		brands,
+		canManageBrands: canManageWorkspaceBrands,
 		constitution,
 		isEditing,
 		name,

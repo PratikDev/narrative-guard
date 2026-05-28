@@ -14,6 +14,7 @@ import { useBrandSetupForm } from "./use-brand-setup-form";
 export function BrandSetupForm({ brand }: { brand?: Doc<"brands"> }) {
 	const {
 		brands,
+		canManageBrands,
 		constitution,
 		isEditing,
 		name,
@@ -29,40 +30,64 @@ export function BrandSetupForm({ brand }: { brand?: Doc<"brands"> }) {
 			<Card className="rounded-lg">
 				<CardHeader>
 					<CardTitle>
-						{isEditing ? "Edit brand details" : "Brand details"}
+						{canManageBrands
+							? isEditing
+								? "Edit brand details"
+								: "Brand details"
+							: brand
+								? brand.name
+								: "Brand constitutions"}
 					</CardTitle>
 				</CardHeader>
 				<CardContent className="space-y-4">
-					<label className="grid gap-2 text-sm font-medium">
-						Brand name
-						<Input
-							value={name}
-							onChange={(event) => setName(event.target.value)}
-						/>
-					</label>
-					<label className="grid gap-2 text-sm font-medium">
-						Brand Constitution
-						<Textarea
-							value={constitution}
-							onChange={(event) => setConstitution(event.target.value)}
-							className="min-h-80 h-120 resize-y"
-						/>
-					</label>
-					<p className="text-sm leading-6 text-muted-foreground">
-						Include tone, messaging pillars, banned phrases, approved examples,
-						audience notes, and any review rules the team should follow.
-					</p>
-					<Button
-						onClick={saveBrand}
-						disabled={state === "loading"}
-					>
-						<Save className="size-4" />
-						{state === "loading"
-							? "Saving"
-							: isEditing
-								? "Update brand"
-								: "Save brand"}
-					</Button>
+					{canManageBrands ? (
+						<>
+							<label className="grid gap-2 text-sm font-medium">
+								Brand name
+								<Input
+									value={name}
+									onChange={(event) => setName(event.target.value)}
+								/>
+							</label>
+							<label className="grid gap-2 text-sm font-medium">
+								Brand Constitution
+								<Textarea
+									value={constitution}
+									onChange={(event) => setConstitution(event.target.value)}
+									className="min-h-80 h-120 resize-y"
+								/>
+							</label>
+							<p className="text-sm leading-6 text-muted-foreground">
+								Include tone, messaging pillars, banned phrases, approved
+								examples, audience notes, and any review rules the team should
+								follow.
+							</p>
+							<Button
+								onClick={saveBrand}
+								disabled={state === "loading"}
+							>
+								<Save className="size-4" />
+								{state === "loading"
+									? "Saving"
+									: isEditing
+										? "Update brand"
+										: "Save brand"}
+							</Button>
+						</>
+					) : brand ? (
+						<div className="space-y-3">
+							<BrandRagStatusBadge status={brand.ragStatus} />
+							<div className="max-h-[560px] overflow-auto rounded-lg border bg-muted/30 p-4">
+								<p className="whitespace-pre-wrap text-sm leading-6">
+									{brand.constitution}
+								</p>
+							</div>
+						</div>
+					) : (
+						<p className="text-sm leading-6 text-muted-foreground">
+							Select a saved brand to read its constitution.
+						</p>
+					)}
 					{state === "success" ? (
 						<Alert className="border-primary/40 bg-primary/10">
 							<AlertTitle>
@@ -79,7 +104,9 @@ export function BrandSetupForm({ brand }: { brand?: Doc<"brands"> }) {
 							<AlertCircle className="size-4" />
 							<AlertTitle>Brand details incomplete</AlertTitle>
 							<AlertDescription>
-								Add a brand name and constitution before saving.
+								{canManageBrands
+									? "Add a brand name and constitution before saving."
+									: "You do not have permission to edit brand details."}
 							</AlertDescription>
 						</Alert>
 					) : null}
@@ -113,7 +140,9 @@ export function BrandSetupForm({ brand }: { brand?: Doc<"brands"> }) {
 				</Card>
 				<Card className="rounded-lg">
 					<CardHeader>
-						<CardTitle>Saved brands</CardTitle>
+						<CardTitle>
+							{canManageBrands ? "Saved brands" : "Brand constitutions"}
+						</CardTitle>
 					</CardHeader>
 					<CardContent className="space-y-3">
 						{brands === undefined ? (
@@ -133,18 +162,28 @@ export function BrandSetupForm({ brand }: { brand?: Doc<"brands"> }) {
 											{brand.constitution}
 										</p>
 									</div>
-									<Button
-										variant="ghost"
-										size="icon"
-										asChild
-									>
-										<Link
-											href={`/setup/${brand._id}`}
-											aria-label={`Edit ${brand.name}`}
+									{canManageBrands ? (
+										<Button
+											variant="ghost"
+											size="icon"
+											asChild
 										>
-											<Pencil className="size-4" />
-										</Link>
-									</Button>
+											<Link
+												href={`/setup/${brand._id}`}
+												aria-label={`Edit ${brand.name}`}
+											>
+												<Pencil className="size-4" />
+											</Link>
+										</Button>
+									) : (
+										<Button
+											variant="outline"
+											size="sm"
+											asChild
+										>
+											<Link href={`/setup/${brand._id}`}>Read</Link>
+										</Button>
+									)}
 								</div>
 							))
 						) : (

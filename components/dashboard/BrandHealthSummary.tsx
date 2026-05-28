@@ -24,8 +24,10 @@ type BrandHealthItem = {
 
 export function BrandHealthSummary({
   health,
+  canManageBrands,
 }: {
   health: BrandHealthItem[];
+  canManageBrands: boolean;
 }) {
   return (
     <Card className="rounded-lg">
@@ -58,11 +60,13 @@ export function BrandHealthSummary({
                   <Link href={`/reports/${latestReport.id}`}>Latest report</Link>
                 </Button>
               ) : null}
-              <Button variant="ghost" size="icon" asChild>
-                <Link href={`/setup/${brand.id}`} aria-label={`Edit ${brand.name}`}>
-                  <Pencil className="size-4" />
-                </Link>
-              </Button>
+              {canManageBrands ? (
+                <Button variant="ghost" size="icon" asChild>
+                  <Link href={`/setup/${brand.id}`} aria-label={`Edit ${brand.name}`}>
+                    <Pencil className="size-4" />
+                  </Link>
+                </Button>
+              ) : null}
             </div>
           </div>
         ))}

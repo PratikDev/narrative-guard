@@ -3,8 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
+import { AlertCircle } from "lucide-react";
 
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
+import {
+	Alert,
+	AlertDescription,
+	AlertTitle,
+} from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -50,7 +56,11 @@ export function AcceptInvitePageClient({ token }: { token: string }) {
 				</CardHeader>
 				<CardContent className="space-y-4">
 					{errorMessage ? (
-						<p className="text-sm text-destructive">{errorMessage}</p>
+						<Alert variant="destructive">
+							<AlertCircle className="size-4" />
+							<AlertTitle>Invite could not be accepted</AlertTitle>
+							<AlertDescription>{errorMessage}</AlertDescription>
+						</Alert>
 					) : null}
 					<Button
 						type="button"

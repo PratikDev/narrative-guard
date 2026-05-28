@@ -11,9 +11,11 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
+import { canManageBrands } from "@/lib/workspace-permissions";
 
 export default function DashboardPage() {
-	const { workspaceId } = useWorkspace();
+	const { activeMembership, workspaceId } = useWorkspace();
+	const canManageWorkspaceBrands = canManageBrands(activeMembership?.role);
 	const workspaceArgs = workspaceId ? { workspaceId } : {};
 	const stats = useQuery(api.report.getDashboardStats, workspaceArgs);
 	const { results: reports } = usePaginatedQuery(
@@ -30,15 +32,17 @@ export default function DashboardPage() {
 				description="Review audit volume, brand health, and the latest coherence reports across active brands."
 				actions={
 					<>
-						<Button
-							variant="outline"
-							asChild
-						>
-							<Link href="/setup">
-								<ShieldCheck data-icon="inline-start" />
-								Create brand
-							</Link>
-						</Button>
+						{canManageWorkspaceBrands ? (
+							<Button
+								variant="outline"
+								asChild
+							>
+								<Link href="/setup">
+									<ShieldCheck data-icon="inline-start" />
+									Create brand
+								</Link>
+							</Button>
+						) : null}
 						<Button asChild>
 							<Link href="/audit">
 								<FileText data-icon="inline-start" />
@@ -61,7 +65,10 @@ export default function DashboardPage() {
 			/>
 			<div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.9fr)]">
 				<RecentReports reports={reports} />
-				<BrandHealthSummary health={health ?? []} />
+				<BrandHealthSummary
+					health={health ?? []}
+					canManageBrands={canManageWorkspaceBrands}
+				/>
 			</div>
 		</div>
 	);

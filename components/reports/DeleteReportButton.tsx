@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
+import { canDeleteReports } from "@/lib/workspace-permissions";
 import { useMutation } from "convex/react";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -31,7 +32,7 @@ export function DeleteReportButton({
 	showLabel = false,
 }: DeleteReportButtonProps) {
 	const router = useRouter();
-	const { workspaceId } = useWorkspace();
+	const { activeMembership, workspaceId } = useWorkspace();
 	const deleteReport = useMutation(api.report.deleteReport);
 	const [open, setOpen] = useState(false);
 	const [isDeleting, setIsDeleting] = useState(false);
@@ -60,6 +61,10 @@ export function DeleteReportButton({
 		} finally {
 			setIsDeleting(false);
 		}
+	}
+
+	if (!canDeleteReports(activeMembership?.role)) {
+		return null;
 	}
 
 	return (

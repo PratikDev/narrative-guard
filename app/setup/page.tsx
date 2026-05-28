@@ -5,8 +5,8 @@ export default function SetupPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Brand Setup"
-        description="Create a brand profile and paste the full Brand Constitution as one source of truth for future audits."
+        title="Brands"
+        description="Create, edit, or read the Brand Constitutions available in the selected workspace."
       />
       <BrandSetupForm />
     </div>
