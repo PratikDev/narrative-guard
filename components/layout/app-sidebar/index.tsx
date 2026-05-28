@@ -4,11 +4,11 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useQuery } from "convex/react";
 import {
 	BarChart3,
-	Command,
 	FileText,
 	History,
 	LogOut,
 	ShieldCheck,
+	Users,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -24,8 +24,10 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
+
 import { api } from "@/convex/_generated/api";
 import { APP_ROUTES } from "@/lib/routes";
+import { WorkspaceSwitcher } from "./WorkspaceSwitcher";
 
 const data = {
 	navItems: [
@@ -49,6 +51,11 @@ const data = {
 			url: APP_ROUTES.history,
 			icon: History,
 		},
+		{
+			name: "Team",
+			url: APP_ROUTES.team,
+			icon: Users,
+		},
 	],
 };
 
@@ -64,24 +71,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			<SidebarHeader>
 				<SidebarMenu>
 					<SidebarMenuItem>
-						<SidebarMenuButton
-							size="lg"
-							asChild
-						>
-							<Link
-								href={APP_ROUTES.dashboard}
-								className="flex items-center gap-2"
-							>
-								<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-									<Command className="size-4" />
-								</div>
-
-								<div className="grid flex-1 text-left text-sm leading-tight">
-									<span className="truncate font-medium">Acme Inc</span>
-									<span className="truncate text-xs">Enterprise</span>
-								</div>
-							</Link>
-						</SidebarMenuButton>
+						<WorkspaceSwitcher />
 					</SidebarMenuItem>
 				</SidebarMenu>
 			</SidebarHeader>

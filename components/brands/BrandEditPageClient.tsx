@@ -6,9 +6,12 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { BrandSetupForm } from "@/components/brands/BrandSetupForm";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingState } from "@/components/shared/LoadingState";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 
 export function BrandEditPageClient({ brandId }: { brandId: string }) {
+  const { workspaceId } = useWorkspace();
   const brand = useQuery(api.brand.getBrand, {
+    ...(workspaceId ? { workspaceId } : {}),
     brandId: brandId as Id<"brands">,
   });
 

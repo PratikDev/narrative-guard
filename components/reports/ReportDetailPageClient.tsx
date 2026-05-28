@@ -6,9 +6,12 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { ReportDetail } from "@/components/reports/ReportDetail";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingState } from "@/components/shared/LoadingState";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 
 export function ReportDetailPageClient({ reportId }: { reportId: string }) {
+  const { workspaceId } = useWorkspace();
   const report = useQuery(api.report.getReportWithFindings, {
+    ...(workspaceId ? { workspaceId } : {}),
     reportId: reportId as Id<"auditReports">,
   });
 

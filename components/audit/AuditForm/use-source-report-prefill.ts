@@ -16,9 +16,11 @@ type SourceReportPrefill = {
 
 export function useSourceReportPrefill({
 	sourceReportId,
+	workspaceId,
 	onPrefill,
 }: {
 	sourceReportId?: string;
+	workspaceId?: Id<"workspaces">;
 	onPrefill: (sourceReport: SourceReportPrefill) => void;
 }) {
 	const convex = useConvex();
@@ -48,6 +50,7 @@ export function useSourceReportPrefill({
 
 			try {
 				const sourceReport = await convex.query(api.report.getReportWithFindings, {
+					...(workspaceId ? { workspaceId } : {}),
 					reportId: reportId as Id<"auditReports">,
 				});
 
@@ -89,7 +92,7 @@ export function useSourceReportPrefill({
 		return () => {
 			isCurrent = false;
 		};
-	}, [convex, onPrefill, sourceReportId]);
+	}, [convex, onPrefill, sourceReportId, workspaceId]);
 
 	return { status, message };
 }

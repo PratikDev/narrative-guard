@@ -6,6 +6,7 @@ export const APP_ROUTES = {
 	setup: "/setup",
 	audit: "/audit",
 	history: "/history",
+	team: "/team",
 } as const;
 
 export const PUBLIC_SHELL_ROUTES = [

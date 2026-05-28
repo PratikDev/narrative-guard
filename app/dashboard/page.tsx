@@ -10,15 +10,18 @@ import { RecentReports } from "@/components/dashboard/RecentReports";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 
 export default function DashboardPage() {
-	const stats = useQuery(api.report.getDashboardStats, {});
+	const { workspaceId } = useWorkspace();
+	const workspaceArgs = workspaceId ? { workspaceId } : {};
+	const stats = useQuery(api.report.getDashboardStats, workspaceArgs);
 	const { results: reports } = usePaginatedQuery(
 		api.report.listReports,
-		{},
+		workspaceArgs,
 		{ initialNumItems: 5 },
 	);
-	const health = useQuery(api.report.getBrandHealth, {});
+	const health = useQuery(api.report.getBrandHealth, workspaceArgs);
 
 	return (
 		<div className="flex flex-col gap-6">

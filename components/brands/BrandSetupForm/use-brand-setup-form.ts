@@ -2,6 +2,7 @@
 
 import { api } from "@/convex/_generated/api";
 import type { Doc } from "@/convex/_generated/dataModel";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 
@@ -12,7 +13,9 @@ type UseBrandSetupFormOptions = {
 };
 
 export function useBrandSetupForm({ brand }: UseBrandSetupFormOptions) {
-	const brands = useQuery(api.brand.listBrands, {});
+	const { workspaceId } = useWorkspace();
+	const workspaceArgs = workspaceId ? { workspaceId } : {};
+	const brands = useQuery(api.brand.listBrands, workspaceArgs);
 	const createBrand = useMutation(api.brand.createBrand);
 	const updateBrand = useMutation(api.brand.updateBrand);
 	const isEditing = Boolean(brand);
@@ -38,11 +41,13 @@ export function useBrandSetupForm({ brand }: UseBrandSetupFormOptions) {
 			const result =
 				isEditing && brand
 					? await updateBrand({
+							...workspaceArgs,
 							brandId: brand._id,
 							name,
 							constitution,
 						})
 					: await createBrand({
+							...workspaceArgs,
 							name,
 							constitution,
 						});

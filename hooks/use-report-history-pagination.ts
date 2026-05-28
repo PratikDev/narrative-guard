@@ -1,14 +1,16 @@
 "use client";
 
 import { api } from "@/convex/_generated/api";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { usePaginatedQuery } from "convex/react";
 
 const REPORTS_PAGE_SIZE = 20;
 
 export function useReportHistoryPagination() {
+	const { workspaceId } = useWorkspace();
 	const { results, status, loadMore } = usePaginatedQuery(
 		api.report.listReports,
-		{},
+		workspaceId ? { workspaceId } : {},
 		{
 			initialNumItems: REPORTS_PAGE_SIZE,
 		}

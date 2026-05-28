@@ -15,6 +15,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { normalizeBrandRagStatus } from "@/lib/brand-status";
 import { CONTENT_TYPE_LABELS, CONTENT_TYPES } from "@/lib/constants";
 import type { ContentType } from "@/lib/types";
@@ -26,7 +27,9 @@ import { useSourceReportPrefill } from "./use-source-report-prefill";
 
 export function AuditForm({ sourceReportId }: { sourceReportId?: string }) {
 	const router = useRouter();
-	const brands = useQuery(api.brand.listBrands, {});
+	const { workspaceId } = useWorkspace();
+	const workspaceArgs = workspaceId ? { workspaceId } : {};
+	const brands = useQuery(api.brand.listBrands, workspaceArgs);
 	const createManualAudit = useMutation(api.audit.createManualAudit);
 	const [brandId, setBrandId] = useState<Id<"brands"> | "">("");
 	const [contentType, setContentType] = useState<ContentType>("generic");
@@ -37,6 +40,7 @@ export function AuditForm({ sourceReportId }: { sourceReportId?: string }) {
 	const [errorMessage, setErrorMessage] = useState("");
 	const sourceReportPrefill = useSourceReportPrefill({
 		sourceReportId,
+		workspaceId,
 		onPrefill: (sourceReport) => {
 			setBrandId(sourceReport.brandId);
 			setContentType(sourceReport.contentType);
@@ -64,6 +68,7 @@ export function AuditForm({ sourceReportId }: { sourceReportId?: string }) {
 
 		try {
 			const result = await createManualAudit({
+				...workspaceArgs,
 				brandId: activeBrandId,
 				contentType,
 				content,
