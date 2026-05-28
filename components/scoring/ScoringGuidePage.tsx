@@ -15,21 +15,25 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { SCORE_FLOORS } from "@/lib/audit-scoring-guide";
+import { LandingHeader } from "../landing/LandingHeader";
 
 export function ScoringGuidePage() {
 	return (
-		<div className="flex flex-col gap-6">
-			<PageHeader
-				title="Scoring Guide"
-				description="How audit scores are calculated across different content types, including weights, penalties, strictness rules, caps, and verdict thresholds."
-			/>
+		<div>
+			<LandingHeader />
+			<main className="container mx-auto flex flex-col gap-6 py-10">
+				<PageHeader
+					title="Scoring Guide"
+					description="How audit scores are calculated across different content types, including weights, penalties, strictness rules, caps, and verdict thresholds."
+				/>
 
-			<OverviewSection />
-			<VerdictScale />
-			<ContentTypePolicyTabs />
-			<IssueTypeReference />
-			<BasePenaltyTable />
-			<WorkedScoringExample />
+				<OverviewSection />
+				<VerdictScale />
+				<ContentTypePolicyTabs />
+				<IssueTypeReference />
+				<BasePenaltyTable />
+				<WorkedScoringExample />
+			</main>
 		</div>
 	);
 }
