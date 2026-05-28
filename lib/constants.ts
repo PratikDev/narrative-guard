@@ -1,4 +1,9 @@
-import type { ContentType, ScoreDimension, Verdict } from "./types";
+import type {
+  AuditIssueType,
+  ContentType,
+  ScoreDimension,
+  Verdict,
+} from "./types";
 
 export const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
   generic: "Generic text",
@@ -35,13 +40,13 @@ export const SCORE_DIMENSION_DESCRIPTIONS: Record<ScoreDimension, string> = {
     "How clearly and credibly the content communicates without overstatement.",
 };
 
-// export const SCORE_DIMENSION_WEIGHTS: Record<ScoreDimension, number> = {
-//   toneAlignment: 25,
-//   messagingAlignment: 25,
-//   bannedPhraseSafety: 25,
-//   audienceFit: 15,
-//   clarityAndTrust: 10,
-// };
+export const AUDIT_ISSUE_TYPE_LABELS: Record<AuditIssueType, string> = {
+  mild_style: "Mild style",
+  hype_phrase: "Hype phrase",
+  banned_phrase: "Banned phrase",
+  absolute_claim: "Absolute claim",
+  direct_contradiction: "Direct contradiction",
+};
 
 export const CONTENT_TYPE_SCORE_DIMENSION_WEIGHTS: Record<
   ContentType,

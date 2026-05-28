@@ -18,6 +18,7 @@ import { getAuditContentTypePolicy } from "./lib/auditContentTypes";
 import { buildAuditPrompt } from "./lib/auditPrompts";
 import { requireAuthUserId } from "./lib/requireAuth";
 import { brandNamespace, brandRag } from "./rag";
+import { auditIssueType } from "./schema";
 
 const contentType = v.union(
   v.literal("generic"),
@@ -141,6 +142,7 @@ export const completeAudit = internalMutation({
           v.literal("medium"),
           v.literal("high")
         ),
+        issueType: auditIssueType,
       })
     ),
   },
@@ -173,6 +175,7 @@ export const completeAudit = internalMutation({
         reason: finding.reason,
         evidence: finding.evidence,
         severity: finding.severity,
+        issueType: finding.issueType,
         createdAt: now,
       });
     }
@@ -268,6 +271,7 @@ export const processManualAudit = internalAction({
           reason: finding.reason,
           evidence: finding.evidence,
           severity: finding.severity,
+          issueType: finding.issueType,
         })),
       });
     } catch (error) {

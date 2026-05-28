@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { AUDIT_ISSUE_TYPE_LABELS } from "@/lib/constants";
 import { getSeverityClass } from "@/lib/score";
 import type { FlaggedSentence } from "@/lib/types";
 
@@ -27,9 +28,14 @@ export function FlaggedSentenceList({
             <p className="max-w-3xl text-sm font-medium leading-6">
               &quot;{flag.sentence}&quot;
             </p>
-            <Badge variant="outline" className="capitalize">
-              {flag.severity}
-            </Badge>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Badge variant="outline">
+                {AUDIT_ISSUE_TYPE_LABELS[flag.issueType]}
+              </Badge>
+              <Badge variant="outline" className="capitalize">
+                {flag.severity}
+              </Badge>
+            </div>
           </div>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             {flag.reason}

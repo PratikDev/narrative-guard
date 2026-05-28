@@ -37,6 +37,14 @@ const findingSeverity = v.union(
   v.literal("high")
 );
 
+export const auditIssueType = v.union(
+  v.literal("mild_style"),
+  v.literal("hype_phrase"),
+  v.literal("banned_phrase"),
+  v.literal("absolute_claim"),
+  v.literal("direct_contradiction")
+);
+
 export const dimensionScores = v.object({
   toneAlignment: v.number(),
   messagingAlignment: v.number(),
@@ -95,6 +103,7 @@ export default defineSchema({
     reason: v.string(),
     evidence: v.optional(v.string()),
     severity: findingSeverity,
+    issueType: auditIssueType,
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])

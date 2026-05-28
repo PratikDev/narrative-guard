@@ -4,6 +4,7 @@ import type { MutationCtx } from "./_generated/server";
 import { action, internalMutation } from "./_generated/server";
 
 const DELETE_BATCH_SIZE = 100;
+const SEED_BATCH_SIZE = 100;
 const RAG_NAMESPACE_STATUSES = ["pending", "ready", "replaced"] as const;
 
 const wipeTable = v.union(
@@ -100,6 +101,76 @@ export const deleteTablePage = internalMutation({
       deleted,
       hasMore: deleted === DELETE_BATCH_SIZE,
     };
+  },
+});
+
+export const seedAuditFindingsIssueTypePage = internalMutation({
+  args: {
+    cursor: v.union(v.string(), v.null()),
+  },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db.query("auditFindings").paginate({
+      numItems: SEED_BATCH_SIZE,
+      cursor: args.cursor,
+    });
+
+    for (const row of rows.page) {
+      await ctx.db.patch(row._id, { issueType: "mild_style" });
+    }
+
+    return {
+      patched: rows.page.length,
+      cursor: rows.continueCursor,
+      isDone: rows.isDone,
+    };
+  },
+});
+
+export const seedAuditFindingsIssueType = action({
+  args: {
+    confirmation: v.string(),
+    token: v.string(),
+  },
+  handler: async (ctx, args) => {
+    if (process.env.ENABLE_WIPE_ALL_DATA !== "true") {
+      throw new Error(
+        "Set ENABLE_WIPE_ALL_DATA=true before running maintenance seeds."
+      );
+    }
+
+    if (!process.env.WIPE_ALL_DATA_TOKEN) {
+      throw new Error("Set WIPE_ALL_DATA_TOKEN before running maintenance seeds.");
+    }
+
+    if (args.token !== process.env.WIPE_ALL_DATA_TOKEN) {
+      throw new Error("Invalid maintenance token.");
+    }
+
+    if (args.confirmation !== "SEED_AUDIT_FINDINGS_ISSUE_TYPE") {
+      throw new Error(
+        'Pass confirmation: "SEED_AUDIT_FINDINGS_ISSUE_TYPE" to seed issue types.'
+      );
+    }
+
+    let totalPatched = 0;
+    let cursor: string | null = null;
+    let isDone = false;
+
+    while (!isDone) {
+      const result: {
+        patched: number;
+        cursor: string | null;
+        isDone: boolean;
+      } = await ctx.runMutation(
+        internal.maintenance.seedAuditFindingsIssueTypePage,
+        { cursor }
+      );
+      totalPatched += result.patched;
+      cursor = result.cursor;
+      isDone = result.isDone;
+    }
+
+    return { patched: totalPatched, issueType: "mild_style" };
   },
 });
 

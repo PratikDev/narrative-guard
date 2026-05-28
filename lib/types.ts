@@ -8,6 +8,8 @@ export type ContentType = Doc<"auditReports">["contentType"];
 
 export type AuditStatus = Doc<"auditReports">["status"];
 
+export type AuditIssueType = Doc<"auditFindings">["issueType"];
+
 export type ScoreDimension = keyof Infer<typeof dimensionScores>;
 
 export type DimensionScores = Record<ScoreDimension, number>;
@@ -18,6 +20,7 @@ export type FlaggedSentence = {
   reason: string;
   evidence?: string;
   severity: Doc<"auditFindings">["severity"];
+  issueType: AuditIssueType;
 };
 
 export type AuditReport = {

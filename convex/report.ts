@@ -32,6 +32,7 @@ function toUiReport(
       reason: finding.reason,
       evidence: finding.evidence,
       severity: finding.severity,
+      issueType: finding.issueType,
     })),
     rewriteSuggestion: report.rewriteSuggestion,
     status: report.status,
