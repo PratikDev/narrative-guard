@@ -48,14 +48,16 @@ export function ReportDetail({ report }: { report: AuditReport }) {
 				<div className="flex flex-wrap gap-2">
 					<BackButton />
 					{hasCompletedAudit ? <DownloadReportButton report={report} /> : null}
-					<Button asChild>
-						<Link
-							href={`/audit?sourceReportId=${encodeURIComponent(report.id)}`}
-						>
-							<FileText className="size-4" />
-							Re-audit
-						</Link>
-					</Button>
+					{hasCompletedAudit ? (
+						<Button asChild>
+							<Link
+								href={`/audit?sourceReportId=${encodeURIComponent(report.id)}`}
+							>
+								<FileText className="size-4" />
+								Re-audit
+							</Link>
+						</Button>
+					) : null}
 				</div>
 				<DeleteReportButton
 					reportId={report.id as Id<"auditReports">}
