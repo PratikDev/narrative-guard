@@ -6,6 +6,7 @@ import {
 	FileText,
 	History,
 	LogOut,
+	Scale,
 	ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
@@ -47,6 +48,11 @@ const data = {
 			name: "History",
 			url: "/history",
 			icon: History,
+		},
+		{
+			name: "Scoring Guide",
+			url: "/scoring",
+			icon: Scale,
 		},
 	],
 };
