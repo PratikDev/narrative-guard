@@ -1,6 +1,7 @@
 "use client";
 
 import { DeleteReportButton } from "@/components/reports/DeleteReportButton";
+import { DownloadReportButton } from "@/components/reports/DownloadReportButton";
 import { AuditReportStatusBadge } from "@/components/shared/AuditReportStatusBadge";
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,12 @@ export const reportHistoryColumns: ColumnDef<AuditReport>[] = [
 				>
 					<Link href={`/reports/${row.original.id}`}>Open report</Link>
 				</Button>
+				{isCompletedAuditReport(row.original) ? (
+					<DownloadReportButton
+						report={row.original}
+						showLabel={false}
+					/>
+				) : null}
 				<DeleteReportButton
 					reportId={row.original.id as Id<"auditReports">}
 				/>

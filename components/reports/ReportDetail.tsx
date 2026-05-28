@@ -5,6 +5,7 @@ import { DimensionScores } from "@/components/audit/DimensionScores";
 import { FlaggedSentenceList } from "@/components/audit/FlaggedSentenceList";
 import { OriginalRewriteComparison } from "@/components/audit/OriginalRewriteComparison";
 import { DeleteReportButton } from "@/components/reports/DeleteReportButton";
+import { DownloadReportButton } from "@/components/reports/DownloadReportButton";
 import BackButton from "@/components/shared/BackButton";
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -46,6 +47,7 @@ export function ReportDetail({ report }: { report: AuditReport }) {
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<div className="flex flex-wrap gap-2">
 					<BackButton />
+					{hasCompletedAudit ? <DownloadReportButton report={report} /> : null}
 					<Button asChild>
 						<Link
 							href={`/audit?sourceReportId=${encodeURIComponent(report.id)}`}
