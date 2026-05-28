@@ -12,13 +12,13 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/convex/_generated/api";
 
 export default function DashboardPage() {
-	const stats = useQuery(api.report.getDashboardStats);
+	const stats = useQuery(api.report.getDashboardStats, {});
 	const { results: reports } = usePaginatedQuery(
 		api.report.listReports,
 		{},
 		{ initialNumItems: 5 },
 	);
-	const health = useQuery(api.report.getBrandHealth);
+	const health = useQuery(api.report.getBrandHealth, {});
 
 	return (
 		<div className="flex flex-col gap-6">

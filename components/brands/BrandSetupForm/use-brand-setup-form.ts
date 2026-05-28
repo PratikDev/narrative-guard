@@ -12,7 +12,7 @@ type UseBrandSetupFormOptions = {
 };
 
 export function useBrandSetupForm({ brand }: UseBrandSetupFormOptions) {
-	const brands = useQuery(api.brand.listBrands);
+	const brands = useQuery(api.brand.listBrands, {});
 	const createBrand = useMutation(api.brand.createBrand);
 	const updateBrand = useMutation(api.brand.updateBrand);
 	const isEditing = Boolean(brand);

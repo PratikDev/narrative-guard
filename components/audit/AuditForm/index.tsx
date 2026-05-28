@@ -26,7 +26,7 @@ import { useSourceReportPrefill } from "./use-source-report-prefill";
 
 export function AuditForm({ sourceReportId }: { sourceReportId?: string }) {
 	const router = useRouter();
-	const brands = useQuery(api.brand.listBrands);
+	const brands = useQuery(api.brand.listBrands, {});
 	const createManualAudit = useMutation(api.audit.createManualAudit);
 	const [brandId, setBrandId] = useState<Id<"brands"> | "">("");
 	const [contentType, setContentType] = useState<ContentType>("generic");
