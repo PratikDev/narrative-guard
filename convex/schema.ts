@@ -37,6 +37,26 @@ const findingSeverity = v.union(
   v.literal("high")
 );
 
+export const workspaceRole = v.union(
+  v.literal("owner"),
+  v.literal("admin"),
+  v.literal("member")
+);
+
+const workspaceMemberStatus = v.union(
+  v.literal("active"),
+  v.literal("removed")
+);
+
+const workspaceInviteRole = v.union(v.literal("admin"), v.literal("member"));
+
+const workspaceInviteStatus = v.union(
+  v.literal("pending"),
+  v.literal("accepted"),
+  v.literal("revoked"),
+  v.literal("expired")
+);
+
 export const auditIssueType = v.union(
   v.literal("mild_style"),
   v.literal("hype_phrase"),
@@ -56,8 +76,43 @@ export const dimensionScores = v.object({
 export default defineSchema({
   ...authTables,
 
+  workspaces: defineTable({
+    name: v.string(),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_created_by_user", ["createdByUserId"]),
+
+  workspaceMembers: defineTable({
+    workspaceId: v.id("workspaces"),
+    userId: v.id("users"),
+    role: workspaceRole,
+    status: workspaceMemberStatus,
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_user", ["userId"])
+    .index("by_workspace_and_user", ["workspaceId", "userId"]),
+
+  workspaceInvites: defineTable({
+    workspaceId: v.id("workspaces"),
+    email: v.string(),
+    role: workspaceInviteRole,
+    tokenHash: v.string(),
+    status: workspaceInviteStatus,
+    invitedByUserId: v.id("users"),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_token_hash", ["tokenHash"])
+    .index("by_workspace", ["workspaceId"])
+    .index("by_email", ["email"]),
+
   brands: defineTable({
-    userId: v.optional(v.id("users")),
+    userId: v.id("users"),
+    workspaceId: v.id("workspaces"),
     name: v.string(),
     constitution: v.string(),
     ragStatus: v.optional(ragStatus),
@@ -67,10 +122,13 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("by_user", ["userId"]),
+    .index("by_user", ["userId"])
+    .index("by_workspace", ["workspaceId"])
+    .index("by_workspace_and_updated", ["workspaceId", "updatedAt"]),
 
   auditReports: defineTable({
-    userId: v.optional(v.id("users")),
+    userId: v.id("users"),
+    workspaceId: v.id("workspaces"),
     brandId: v.id("brands"),
     contentType,
     originalContent: v.string(),
@@ -89,14 +147,17 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_user_created", ["userId", "createdAt"])
+    .index("by_workspace_created", ["workspaceId", "createdAt"])
     .index("by_brand_created", ["brandId", "createdAt"])
     .index("by_created", ["createdAt"])
     .index("by_verdict", ["verdict"])
     .index("by_user_verdict", ["userId", "verdict"])
+    .index("by_workspace_verdict", ["workspaceId", "verdict"])
     .index("by_brand_verdict", ["brandId", "verdict"]),
 
   auditFindings: defineTable({
-    userId: v.optional(v.id("users")),
+    userId: v.id("users"),
+    workspaceId: v.id("workspaces"),
     reportId: v.id("auditReports"),
     brandId: v.id("brands"),
     sentence: v.string(),
@@ -107,6 +168,7 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_user", ["userId"])
+    .index("by_workspace", ["workspaceId"])
     .index("by_report", ["reportId"])
     .index("by_brand", ["brandId"]),
 });

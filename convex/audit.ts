@@ -17,6 +17,7 @@ import {
 import { getAuditContentTypePolicy } from "./lib/auditContentTypes";
 import { buildAuditPrompt } from "./lib/auditPrompts";
 import { requireAuthUserId } from "./lib/requireAuth";
+import { requireWorkspaceMember } from "./lib/workspaceAuth";
 import { brandNamespace, brandRag } from "./rag";
 import { auditIssueType } from "./schema";
 
@@ -56,6 +57,7 @@ const auditResultSchema = z.object({
 
 export const createManualAudit = mutation({
   args: {
+    workspaceId: v.optional(v.id("workspaces")),
     brandId: v.id("brands"),
     contentType,
     content: v.string(),
@@ -64,9 +66,13 @@ export const createManualAudit = mutation({
     const userId = await requireAuthUserId(ctx);
 
     const brand = await ctx.db.get(args.brandId);
-    if (!brand || brand.userId !== userId) {
+    if (!brand) {
       throw new Error("Brand not found.");
     }
+    if (args.workspaceId && brand.workspaceId !== args.workspaceId) {
+      throw new Error("Brand not found.");
+    }
+    await requireWorkspaceMember(ctx, brand.workspaceId, userId);
     if (brand.ragStatus !== "ready") {
       throw new Error("Brand constitution is still indexing.");
     }
@@ -76,6 +82,7 @@ export const createManualAudit = mutation({
 
     const reportId = await ctx.db.insert("auditReports", {
       userId,
+      workspaceId: brand.workspaceId,
       brandId: args.brandId,
       contentType: args.contentType,
       originalContent: content,
@@ -111,6 +118,7 @@ export const getAuditForProcessing = internalQuery({
 
     const brand = await ctx.db.get(report.brandId);
     if (!brand) return null;
+    if (brand.workspaceId !== report.workspaceId) return null;
 
     return { report, brand };
   },
@@ -169,6 +177,7 @@ export const completeAudit = internalMutation({
     for (const finding of args.findings) {
       await ctx.db.insert("auditFindings", {
         userId: report.userId,
+        workspaceId: report.workspaceId,
         reportId: args.reportId,
         brandId: report.brandId,
         sentence: finding.sentence,

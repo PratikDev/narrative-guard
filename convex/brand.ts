@@ -9,22 +9,38 @@ import {
 } from "./_generated/server";
 import type { EntryId } from "@convex-dev/rag";
 import { requireAuthUserId } from "./lib/requireAuth";
+import {
+	resolveWorkspaceForMutation,
+	resolveWorkspaceForQuery,
+	requireWorkspaceMember,
+	requireWorkspaceRole,
+} from "./lib/workspaceAuth";
 import { BRAND_CONSTITUTION_KEY, brandNamespace, brandRag } from "./rag";
 
 export const createBrand = mutation({
-  args: {
-    name: v.string(),
-    constitution: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const userId = await requireAuthUserId(ctx);
+	args: {
+		workspaceId: v.optional(v.id("workspaces")),
+		name: v.string(),
+		constitution: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const userId = await requireAuthUserId(ctx);
+		const membership = await resolveWorkspaceForMutation(
+			ctx,
+			userId,
+			args.workspaceId,
+		);
+		if (!["owner", "admin"].includes(membership.role)) {
+			throw new Error("You do not have permission to create brands.");
+		}
 
-    const now = Date.now();
+		const now = Date.now();
 
-    const brandId = await ctx.db.insert("brands", {
-      userId,
-      name: args.name.trim(),
-      constitution: args.constitution.trim(),
+		const brandId = await ctx.db.insert("brands", {
+			userId,
+			workspaceId: membership.workspaceId,
+			name: args.name.trim(),
+			constitution: args.constitution.trim(),
       ragStatus: "indexing",
       createdAt: now,
       updatedAt: now,
@@ -41,19 +57,24 @@ export const createBrand = mutation({
 });
 
 export const updateBrand = mutation({
-  args: {
-    brandId: v.id("brands"),
-    name: v.string(),
-    constitution: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const userId = await requireAuthUserId(ctx);
-    const brand = await ctx.db.get(args.brandId);
-    if (!brand || brand.userId !== userId) {
-      throw new Error("Brand not found.");
-    }
+	args: {
+		workspaceId: v.optional(v.id("workspaces")),
+		brandId: v.id("brands"),
+		name: v.string(),
+		constitution: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const userId = await requireAuthUserId(ctx);
+		const brand = await ctx.db.get(args.brandId);
+		if (!brand) {
+			throw new Error("Brand not found.");
+		}
+		if (args.workspaceId && brand.workspaceId !== args.workspaceId) {
+			throw new Error("Brand not found.");
+		}
+		await requireWorkspaceRole(ctx, brand.workspaceId, userId, "admin");
 
-    await ctx.db.patch(args.brandId, {
+		await ctx.db.patch(args.brandId, {
       name: args.name.trim(),
       constitution: args.constitution.trim(),
       ragStatus: "indexing",
@@ -72,29 +93,42 @@ export const updateBrand = mutation({
 });
 
 export const getBrand = query({
-  args: {
-    brandId: v.id("brands"),
-  },
-  handler: async (ctx, args) => {
-    const userId = await requireAuthUserId(ctx);
+	args: {
+		workspaceId: v.optional(v.id("workspaces")),
+		brandId: v.id("brands"),
+	},
+	handler: async (ctx, args) => {
+		const userId = await requireAuthUserId(ctx);
 
-    const brand = await ctx.db.get(args.brandId);
-    if (!brand || brand.userId !== userId) return null;
+		const brand = await ctx.db.get(args.brandId);
+		if (!brand) return null;
+		if (args.workspaceId && brand.workspaceId !== args.workspaceId) return null;
+		await requireWorkspaceMember(ctx, brand.workspaceId, userId);
 
-    return brand;
-  },
+		return brand;
+	},
 });
 
 export const listBrands = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await requireAuthUserId(ctx);
+	args: {
+		workspaceId: v.optional(v.id("workspaces")),
+	},
+	handler: async (ctx, args) => {
+		const userId = await requireAuthUserId(ctx);
+		const membership = await resolveWorkspaceForQuery(
+			ctx,
+			userId,
+			args.workspaceId,
+		);
+		if (!membership) return [];
 
-    return await ctx.db
-      .query("brands")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .order("desc")
-      .collect();
+		return await ctx.db
+			.query("brands")
+			.withIndex("by_workspace", (q) =>
+				q.eq("workspaceId", membership.workspaceId),
+			)
+			.order("desc")
+			.collect();
   },
 });
 

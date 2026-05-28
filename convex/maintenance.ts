@@ -11,6 +11,9 @@ const wipeTable = v.union(
   v.literal("auditFindings"),
   v.literal("auditReports"),
   v.literal("brands"),
+  v.literal("workspaceInvites"),
+  v.literal("workspaceMembers"),
+  v.literal("workspaces"),
   v.literal("authVerificationCodes"),
   v.literal("authRefreshTokens"),
   v.literal("authAccounts"),
@@ -36,6 +39,24 @@ async function deleteAuditReports(ctx: MutationCtx) {
 
 async function deleteBrands(ctx: MutationCtx) {
   const rows = await ctx.db.query("brands").take(DELETE_BATCH_SIZE);
+  for (const row of rows) await ctx.db.delete(row._id);
+  return rows.length;
+}
+
+async function deleteWorkspaceInvites(ctx: MutationCtx) {
+  const rows = await ctx.db.query("workspaceInvites").take(DELETE_BATCH_SIZE);
+  for (const row of rows) await ctx.db.delete(row._id);
+  return rows.length;
+}
+
+async function deleteWorkspaceMembers(ctx: MutationCtx) {
+  const rows = await ctx.db.query("workspaceMembers").take(DELETE_BATCH_SIZE);
+  for (const row of rows) await ctx.db.delete(row._id);
+  return rows.length;
+}
+
+async function deleteWorkspaces(ctx: MutationCtx) {
+  const rows = await ctx.db.query("workspaces").take(DELETE_BATCH_SIZE);
   for (const row of rows) await ctx.db.delete(row._id);
   return rows.length;
 }
@@ -82,6 +103,9 @@ const deleteTablePageHandlers: Record<WipeTable, DeleteTablePageHandler> = {
   auditFindings: deleteAuditFindings,
   auditReports: deleteAuditReports,
   brands: deleteBrands,
+  workspaceInvites: deleteWorkspaceInvites,
+  workspaceMembers: deleteWorkspaceMembers,
+  workspaces: deleteWorkspaces,
   authVerificationCodes: deleteAuthVerificationCodes,
   authRefreshTokens: deleteAuthRefreshTokens,
   authAccounts: deleteAuthAccounts,
@@ -200,6 +224,9 @@ export const wipeAllData = action({
       "auditFindings",
       "auditReports",
       "brands",
+      "workspaceInvites",
+      "workspaceMembers",
+      "workspaces",
       "authVerificationCodes",
       "authRefreshTokens",
       "authAccounts",
@@ -212,6 +239,9 @@ export const wipeAllData = action({
       auditFindings: 0,
       auditReports: 0,
       brands: 0,
+      workspaceInvites: 0,
+      workspaceMembers: 0,
+      workspaces: 0,
       authVerificationCodes: 0,
       authRefreshTokens: 0,
       authAccounts: 0,
