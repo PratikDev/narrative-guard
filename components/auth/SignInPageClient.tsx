@@ -12,12 +12,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getSafeInternalRedirectPath } from "@/lib/routes";
 
 export function SignInPageClient() {
   const searchParams = useSearchParams();
   const { signIn } = useAuthActions();
   const [state, setState] = useState<"idle" | "loading" | "error">("idle");
-  const redirectTo = searchParams.get("next") || "/";
+  const redirectTo = getSafeInternalRedirectPath(searchParams.get("next"));
 
   async function signInWithGoogle() {
     setState("loading");
@@ -37,7 +38,7 @@ export function SignInPageClient() {
           </div>
           <CardTitle className="text-xl">Sign in to NarrativeGuard</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="flex flex-col gap-4">
           <Button
             className="w-full"
             size="lg"

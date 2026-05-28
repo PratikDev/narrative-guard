@@ -1,17 +1,16 @@
 "use client";
 
+import { useAuthActions } from "@convex-dev/auth/react";
+import { useQuery } from "convex/react";
 import {
 	BarChart3,
 	Command,
 	FileText,
 	History,
 	LogOut,
-	Scale,
 	ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
-import { useAuthActions } from "@convex-dev/auth/react";
-import { useQuery } from "convex/react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -26,33 +25,29 @@ import {
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { api } from "@/convex/_generated/api";
+import { APP_ROUTES } from "@/lib/routes";
 
 const data = {
 	navItems: [
 		{
 			name: "Dashboard",
-			url: "/",
+			url: APP_ROUTES.dashboard,
 			icon: BarChart3,
 		},
 		{
 			name: "Setup",
-			url: "/setup",
+			url: APP_ROUTES.setup,
 			icon: ShieldCheck,
 		},
 		{
 			name: "Audit",
-			url: "/audit",
+			url: APP_ROUTES.audit,
 			icon: FileText,
 		},
 		{
 			name: "History",
-			url: "/history",
+			url: APP_ROUTES.history,
 			icon: History,
-		},
-		{
-			name: "Scoring Guide",
-			url: "/scoring",
-			icon: Scale,
 		},
 	],
 };
@@ -74,7 +69,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 							asChild
 						>
 							<Link
-								href="/"
+								href={APP_ROUTES.dashboard}
 								className="flex items-center gap-2"
 							>
 								<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
@@ -128,12 +123,14 @@ function NavUser({
 					size="lg"
 					className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 				>
-					<Avatar className="h-8 w-8 rounded-lg">
+					<Avatar className="size-8 rounded-lg">
 						<AvatarImage
 							src={user.avatar}
 							alt={user.name}
 						/>
-						<AvatarFallback className="rounded-lg">{fallback || "U"}</AvatarFallback>
+						<AvatarFallback className="rounded-lg">
+							{fallback || "U"}
+						</AvatarFallback>
 					</Avatar>
 					<div className="grid flex-1 text-left text-sm leading-tight">
 						<span className="truncate font-medium">{user.name}</span>

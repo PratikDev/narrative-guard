@@ -10,6 +10,7 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { APP_ROUTES } from "@/lib/routes";
 import Link from "next/link";
 import { AppSidebar } from "./app-sidebar";
 
@@ -28,7 +29,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 						<BreadcrumbList>
 							<BreadcrumbItem className="hidden md:block">
 								<BreadcrumbLink asChild>
-									<Link href="/">Home</Link>
+									<Link href={APP_ROUTES.dashboard}>Dashboard</Link>
 								</BreadcrumbLink>
 							</BreadcrumbItem>
 						</BreadcrumbList>
