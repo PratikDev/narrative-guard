@@ -65,6 +65,15 @@ export async function requireWorkspaceRole(
 	return membership;
 }
 
+export function canManageWorkspaceMember(
+	actorRole: WorkspaceRole,
+	targetRole: WorkspaceRole,
+) {
+	if (actorRole === "owner") return targetRole !== "owner";
+	if (actorRole === "admin") return targetRole === "member";
+	return false;
+}
+
 export async function getFirstActiveWorkspaceMembership(
 	ctx: WorkspaceAuthCtx,
 	userId: Id<"users">,
