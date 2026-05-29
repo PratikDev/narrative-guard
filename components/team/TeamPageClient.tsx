@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import {
 	AlertCircle,
@@ -10,18 +9,13 @@ import {
 	Trash2,
 	UserPlus,
 } from "lucide-react";
+import { useState } from "react";
 
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingState } from "@/components/shared/LoadingState";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-	Alert,
-	AlertDescription,
-	AlertTitle,
-} from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -32,6 +26,8 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
@@ -287,7 +283,8 @@ export function TeamPageClient() {
 						</div>
 						<div className="grid gap-3 text-sm text-muted-foreground md:grid-cols-3">
 							<p>
-								Members: <span className="text-foreground">{members?.length ?? 0}</span>
+								Members:{" "}
+								<span className="text-foreground">{members?.length ?? 0}</span>
 							</p>
 							<p>
 								Created:{" "}
@@ -401,22 +398,28 @@ export function TeamPageClient() {
 													<DropdownMenuContent align="end">
 														{actorRole === "owner" ? (
 															<>
-																<DropdownMenuItem
-																	onSelect={() =>
-																		handleRoleChange(member._id, "member")
-																	}
-																>
-																	Make member
-																</DropdownMenuItem>
-																<DropdownMenuItem
-																	onSelect={() =>
-																		handleRoleChange(member._id, "admin")
-																	}
-																>
-																	Make admin
-																</DropdownMenuItem>
+																{member.role === "admin" && (
+																	<DropdownMenuItem
+																		onSelect={() =>
+																			handleRoleChange(member._id, "member")
+																		}
+																	>
+																		Make member
+																	</DropdownMenuItem>
+																)}
+
+																{member.role === "member" && (
+																	<DropdownMenuItem
+																		onSelect={() =>
+																			handleRoleChange(member._id, "admin")
+																		}
+																	>
+																		Make admin
+																	</DropdownMenuItem>
+																)}
 															</>
 														) : null}
+
 														<AlertDialog>
 															<AlertDialogTrigger asChild>
 																<DropdownMenuItem
@@ -514,8 +517,8 @@ export function TeamPageClient() {
 																Revoke this invite?
 															</AlertDialogTitle>
 															<AlertDialogDescription>
-																This invite link will stop working
-																immediately. Existing members are not affected.
+																This invite link will stop working immediately.
+																Existing members are not affected.
 															</AlertDialogDescription>
 														</AlertDialogHeader>
 														<AlertDialogFooter>
