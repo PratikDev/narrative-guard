@@ -12,9 +12,26 @@ import {
 
 const inviteRole = v.union(v.literal("admin"), v.literal("member"));
 const INVITE_EXPIRY_MS = 1000 * 60 * 60 * 24 * 7;
+const MAX_WORKSPACE_NAME_LENGTH = 80;
 
 function normalizeEmail(email: string) {
 	return email.trim().toLowerCase();
+}
+
+function normalizeWorkspaceName(name: string) {
+	const normalizedName = name.trim();
+
+	if (!normalizedName) {
+		throw new Error("Workspace name is required.");
+	}
+
+	if (normalizedName.length > MAX_WORKSPACE_NAME_LENGTH) {
+		throw new Error(
+			`Workspace name must be ${MAX_WORKSPACE_NAME_LENGTH} characters or fewer.`,
+		);
+	}
+
+	return normalizedName;
 }
 
 async function expireInviteIfNeeded(
@@ -96,6 +113,35 @@ export const getOrCreateDefaultWorkspace = mutation({
 	},
 });
 
+export const createWorkspace = mutation({
+	args: {
+		name: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const userId = await requireAuthUserId(ctx);
+		const now = Date.now();
+		const workspaceId = await ctx.db.insert("workspaces", {
+			name: normalizeWorkspaceName(args.name),
+			createdByUserId: userId,
+			createdAt: now,
+			updatedAt: now,
+		});
+		const membershipId = await ctx.db.insert("workspaceMembers", {
+			workspaceId,
+			userId,
+			role: "owner",
+			status: "active",
+			createdAt: now,
+			updatedAt: now,
+		});
+
+		return {
+			workspaceId,
+			membershipId,
+		};
+	},
+});
+
 export const updateWorkspace = mutation({
 	args: {
 		workspaceId: v.id("workspaces"),
@@ -106,7 +152,7 @@ export const updateWorkspace = mutation({
 		await requireWorkspaceRole(ctx, args.workspaceId, userId, "owner");
 
 		await ctx.db.patch(args.workspaceId, {
-			name: args.name.trim(),
+			name: normalizeWorkspaceName(args.name),
 			updatedAt: Date.now(),
 		});
 
