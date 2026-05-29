@@ -131,7 +131,7 @@ function NavUser({
 			<SidebarMenuItem>
 				<SidebarMenuButton
 					type="button"
-					onClick={() => void signOut()}
+					onClick={signOut}
 				>
 					<LogOut />
 					<span>Sign out</span>

@@ -6,11 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "prod": "bun run convex && bun run build && bun run start",
     "lint": "eslint",
     "sad": "bunx --bun shadcn@latest add",
     "convex": "bunx convex dev --once",
-    "prod": "bun run convex && bun run build && bun run start",
     "convex:watch": "bunx convex dev",
+    "convex:deploy": "bunx convex deploy",
     "convex:dash": "bunx convex dash"
   },
   "dependencies": {

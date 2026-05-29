@@ -77,7 +77,7 @@ export function BrandSetupForm({ brand }: { brand?: Doc<"brands"> }) {
 					) : brand ? (
 						<div className="space-y-3">
 							<BrandRagStatusBadge status={brand.ragStatus} />
-							<div className="max-h-[560px] overflow-auto rounded-lg border bg-muted/30 p-4">
+							<div className="max-h-140 overflow-auto rounded-lg border bg-muted/30 p-4">
 								<p className="whitespace-pre-wrap text-sm leading-6">
 									{brand.constitution}
 								</p>
