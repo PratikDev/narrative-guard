@@ -27,6 +27,23 @@ export function getReportHistoryColumns({
 			),
 		},
 		{
+			accessorKey: "auditor",
+			header: "Audited By",
+			cell: ({ row }) => {
+				const { email, name } = row.original.auditor;
+				const label = name ?? email ?? "Unknown user";
+
+				return (
+					<div className="max-w-44">
+						<p className="truncate text-sm font-medium">{label}</p>
+						{name && email ? (
+							<p className="truncate text-xs text-muted-foreground">{email}</p>
+						) : null}
+					</div>
+				);
+			},
+		},
+		{
 			accessorKey: "contentType",
 			header: "Content type",
 			filterFn: (row, _columnId, value) =>

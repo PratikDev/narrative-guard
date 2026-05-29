@@ -39,6 +39,7 @@ export function BrandSetupForm({ brand }: { brand?: Doc<"brands"> }) {
 								: "Brand constitutions"}
 					</CardTitle>
 				</CardHeader>
+
 				<CardContent className="space-y-4">
 					{canManageBrands ? (
 						<>
@@ -112,6 +113,7 @@ export function BrandSetupForm({ brand }: { brand?: Doc<"brands"> }) {
 					) : null}
 				</CardContent>
 			</Card>
+
 			<div className="space-y-4">
 				<Card className="rounded-lg">
 					<CardHeader>

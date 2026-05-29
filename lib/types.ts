@@ -27,6 +27,11 @@ export type AuditReport = {
   id: string;
   brandId: string;
   brandName: string;
+  auditor: {
+    id: Doc<"users">["_id"];
+    name: string | null;
+    email: string | null;
+  };
   contentType: ContentType;
   originalContent: string;
   score: number;

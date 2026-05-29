@@ -13,12 +13,18 @@ import {
 function toUiReport(
 	report: Doc<"auditReports">,
 	brand: Doc<"brands"> | null,
+	auditor: Doc<"users"> | null,
 	findings: Doc<"auditFindings">[],
 ) {
 	return {
 		id: report._id,
 		brandId: report.brandId,
 		brandName: brand?.name ?? "Deleted brand",
+		auditor: {
+			id: report.userId,
+			name: auditor?.name ?? null,
+			email: auditor?.email ?? null,
+		},
 		contentType: report.contentType,
 		originalContent: report.originalContent,
 		score: report.score,
@@ -91,12 +97,13 @@ export const listReports = query({
 		const page = await Promise.all(
 			reports.page.map(async (report) => {
 				const brand = await ctx.db.get(report.brandId);
+				const auditor = await ctx.db.get(report.userId);
 				const findings = await getFindingsByReport(
 					ctx,
 					report._id,
 					membership.workspaceId,
 				);
-				return toUiReport(report, brand, findings);
+				return toUiReport(report, brand, auditor, findings);
 			}),
 		);
 
@@ -121,13 +128,14 @@ export const getReportWithFindings = query({
 		await requireWorkspaceMember(ctx, report.workspaceId, userId);
 
 		const brand = await ctx.db.get(report.brandId);
+		const auditor = await ctx.db.get(report.userId);
 		const findings = await getFindingsByReport(
 			ctx,
 			report._id,
 			report.workspaceId,
 		);
 
-		return toUiReport(report, brand, findings);
+		return toUiReport(report, brand, auditor, findings);
 	},
 });
 
@@ -268,7 +276,7 @@ export const getBrandHealth = query({
 					},
 					averageScore,
 					latestReport: workspaceReports[0]
-						? toUiReport(workspaceReports[0], brand, [])
+						? toUiReport(workspaceReports[0], brand, null, [])
 						: null,
 					reportCount: workspaceReports.length,
 				};
