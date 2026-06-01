@@ -16,6 +16,7 @@ import {
 } from "./lib/auditScoring";
 import { getAuditContentTypePolicy } from "./lib/auditContentTypes";
 import { buildAuditPrompt } from "./lib/auditPrompts";
+import { createNotification } from "./lib/notificationHelpers";
 import { requireAuthUserId } from "./lib/requireAuth";
 import { requireWorkspaceMember } from "./lib/workspaceAuth";
 import { brandNamespace, brandRag } from "./rag";
@@ -157,6 +158,7 @@ export const completeAudit = internalMutation({
   handler: async (ctx, args) => {
     const report = await ctx.db.get(args.reportId);
     if (!report) return null;
+    const brand = await ctx.db.get(report.brandId);
 
     const now = Date.now();
     await ctx.db.patch(args.reportId, {
@@ -189,6 +191,18 @@ export const completeAudit = internalMutation({
       });
     }
 
+    await createNotification(ctx, {
+      userId: report.userId,
+      workspaceId: report.workspaceId,
+      brandId: report.brandId,
+      reportId: args.reportId,
+      scope: "user",
+      type: "audit_completed",
+      title: "Audit completed",
+      message: `${brand?.name ?? "Your brand"} audit finished with a ${clampScore(args.score)}/100 score.`,
+      createdAt: now,
+    });
+
     return null;
   },
 });
@@ -201,12 +215,26 @@ export const failAudit = internalMutation({
   handler: async (ctx, args) => {
     const report = await ctx.db.get(args.reportId);
     if (!report) return null;
+    const brand = await ctx.db.get(report.brandId);
+    const now = Date.now();
 
     await ctx.db.patch(args.reportId, {
       status: "failed",
       error: args.error,
       summary: "The audit failed before scoring completed.",
-      updatedAt: Date.now(),
+      updatedAt: now,
+    });
+
+    await createNotification(ctx, {
+      userId: report.userId,
+      workspaceId: report.workspaceId,
+      brandId: report.brandId,
+      reportId: args.reportId,
+      scope: "user",
+      type: "audit_failed",
+      title: "Audit failed",
+      message: `${brand?.name ?? "Your brand"} audit failed before scoring completed.`,
+      createdAt: now,
     });
 
     return null;

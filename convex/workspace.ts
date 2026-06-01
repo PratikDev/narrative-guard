@@ -1,13 +1,17 @@
 import { v } from "convex/values";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { mutation, query } from "./_generated/server";
+import {
+	createNotification,
+	notifyWorkspaceMembers,
+} from "./lib/notificationHelpers";
 import { requireAuthUserId } from "./lib/requireAuth";
 import {
 	canManageWorkspaceMember,
-	resolveWorkspaceForMutation,
 	requireWorkspaceMember,
 	requireWorkspaceRole,
+	resolveWorkspaceForMutation,
 } from "./lib/workspaceAuth";
 
 const inviteRole = v.union(v.literal("admin"), v.literal("member"));
@@ -32,6 +36,47 @@ function normalizeWorkspaceName(name: string) {
 	}
 
 	return normalizedName;
+}
+
+function displayUserName(user: Doc<"users"> | null) {
+	return user?.name || user?.email || "Someone";
+}
+
+async function createWorkspaceInviteNotification(
+	ctx: MutationCtx,
+	args: {
+		invite: Doc<"workspaceInvites">;
+		userId: Id<"users">;
+		now: number;
+	},
+) {
+	const existingNotification = await ctx.db
+		.query("notifications")
+		.withIndex("by_user_and_invite", (q) =>
+			q.eq("userId", args.userId).eq("inviteId", args.invite._id),
+		)
+		.unique();
+
+	if (existingNotification) return false;
+
+	const [workspace, inviter] = await Promise.all([
+		ctx.db.get(args.invite.workspaceId),
+		ctx.db.get(args.invite.invitedByUserId),
+	]);
+
+	await createNotification(ctx, {
+		userId: args.userId,
+		actorUserId: args.invite.invitedByUserId,
+		workspaceId: args.invite.workspaceId,
+		inviteId: args.invite._id,
+		scope: "user",
+		type: "workspace_invitation_received",
+		title: "Workspace invitation",
+		message: `${displayUserName(inviter)} invited you to ${workspace?.name ?? "a workspace"}.`,
+		createdAt: args.now,
+	});
+
+	return true;
 }
 
 async function expireInviteIfNeeded(
@@ -183,11 +228,11 @@ export const listMembers = query({
 					member,
 					user: user
 						? {
-								id: user._id,
-								name: user.name,
-								email: user.email,
-								image: user.image,
-							}
+							id: user._id,
+							name: user.name,
+							email: user.email,
+							image: user.image,
+						}
 						: null,
 				};
 			}),
@@ -212,6 +257,41 @@ export const listInvites = query({
 		return invites
 			.filter((invite) => invite.status === "pending" && invite.expiresAt >= now)
 			.sort((a, b) => b.createdAt - a.createdAt);
+	},
+});
+
+export const syncPendingInviteNotifications = mutation({
+	args: {},
+	handler: async (ctx) => {
+		const userId = await requireAuthUserId(ctx);
+		const user = await ctx.db.get(userId);
+		const email = user?.email ? normalizeEmail(user.email) : "";
+
+		if (!email) {
+			return { created: 0 };
+		}
+
+		const now = Date.now();
+		const invites = await ctx.db
+			.query("workspaceInvites")
+			.withIndex("by_email", (q) => q.eq("email", email))
+			.collect();
+		let created = 0;
+
+		for (const invite of invites) {
+			if (await expireInviteIfNeeded(ctx, invite, now)) continue;
+			if (invite.status !== "pending" || invite.expiresAt < now) continue;
+
+			const didCreate = await createWorkspaceInviteNotification(ctx, {
+				invite,
+				userId,
+				now,
+			});
+
+			if (didCreate) created += 1;
+		}
+
+		return { created };
 	},
 });
 
@@ -274,6 +354,8 @@ export const inviteMember = mutation({
 
 		const token = createInviteToken();
 		const tokenHash = await hashInviteToken(token);
+		const workspace = await ctx.db.get(args.workspaceId);
+		const actor = await ctx.db.get(userId);
 		const inviteId = await ctx.db.insert("workspaceInvites", {
 			workspaceId: args.workspaceId,
 			email,
@@ -285,6 +367,22 @@ export const inviteMember = mutation({
 			createdAt: now,
 			updatedAt: now,
 		});
+		const invite = await ctx.db.get(inviteId);
+		const invitedUsers = await ctx.db
+			.query("users")
+			.withIndex("email", (q) => q.eq("email", email))
+			.take(1);
+		const invitedUser = invitedUsers[0];
+
+		console.log(`>>>>>>>>>> User ${displayUserName(actor)} invited ${email} to workspace ${workspace?.name ?? args.workspaceId} with role ${args.role}.`);
+
+		if (invite && invitedUser) {
+			await createWorkspaceInviteNotification(ctx, {
+				invite,
+				userId: invitedUser._id,
+				now,
+			});
+		}
 
 		return {
 			inviteId,
@@ -373,6 +471,17 @@ export const acceptInvite = mutation({
 			status: "accepted",
 			updatedAt: now,
 		});
+		const workspace = await ctx.db.get(invite.workspaceId);
+
+		await notifyWorkspaceMembers(ctx, {
+			workspaceId: invite.workspaceId,
+			actorUserId: userId,
+			excludeUserIds: [userId],
+			type: "workspace_invitation_accepted",
+			title: "New member joined",
+			message: `${displayUserName(user)} accepted the invitation to ${workspace?.name ?? "the workspace"}.`,
+			createdAt: now,
+		});
 
 		return {
 			workspaceId: invite.workspaceId,
@@ -397,10 +506,24 @@ export const updateMemberRole = mutation({
 		if (member.role === "owner") {
 			throw new Error("Owners cannot be changed from this screen.");
 		}
+		const now = Date.now();
+		const workspace = await ctx.db.get(args.workspaceId);
+		const actor = await ctx.db.get(userId);
 
 		await ctx.db.patch(args.memberId, {
 			role: args.role,
-			updatedAt: Date.now(),
+			updatedAt: now,
+		});
+
+		await createNotification(ctx, {
+			userId: member.userId,
+			actorUserId: userId,
+			workspaceId: args.workspaceId,
+			scope: "user",
+			type: "workspace_role_changed",
+			title: "Workspace role changed",
+			message: `${displayUserName(actor)} changed your role in ${workspace?.name ?? "the workspace"} to ${args.role}.`,
+			createdAt: now,
 		});
 
 		return { memberId: args.memberId };

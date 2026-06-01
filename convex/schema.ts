@@ -57,6 +57,19 @@ const workspaceInviteStatus = v.union(
   v.literal("expired")
 );
 
+const notificationScope = v.union(
+  v.literal("user"),
+  v.literal("workspace")
+);
+
+const notificationType = v.union(
+  v.literal("audit_completed"),
+  v.literal("audit_failed"),
+  v.literal("workspace_invitation_received"),
+  v.literal("workspace_invitation_accepted"),
+  v.literal("workspace_role_changed")
+);
+
 export const auditIssueType = v.union(
   v.literal("mild_style"),
   v.literal("hype_phrase"),
@@ -171,4 +184,27 @@ export default defineSchema({
     .index("by_workspace", ["workspaceId"])
     .index("by_report", ["reportId"])
     .index("by_brand", ["brandId"]),
+
+  notifications: defineTable({
+    userId: v.id("users"),
+    actorUserId: v.optional(v.id("users")),
+    workspaceId: v.optional(v.id("workspaces")),
+    brandId: v.optional(v.id("brands")),
+    reportId: v.optional(v.id("auditReports")),
+    inviteId: v.optional(v.id("workspaceInvites")),
+    scope: notificationScope,
+    type: notificationType,
+    title: v.string(),
+    message: v.string(),
+    readAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_user_and_created_at", ["userId", "createdAt"])
+    .index("by_user_and_read_at_and_created_at", [
+      "userId",
+      "readAt",
+      "createdAt",
+    ])
+    .index("by_user_and_invite", ["userId", "inviteId"])
+    .index("by_workspace_and_created_at", ["workspaceId", "createdAt"]),
 });

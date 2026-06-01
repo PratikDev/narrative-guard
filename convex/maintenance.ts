@@ -11,6 +11,7 @@ const wipeTable = v.union(
   v.literal("auditFindings"),
   v.literal("auditReports"),
   v.literal("brands"),
+  v.literal("notifications"),
   v.literal("workspaceInvites"),
   v.literal("workspaceMembers"),
   v.literal("workspaces"),
@@ -39,6 +40,12 @@ async function deleteAuditReports(ctx: MutationCtx) {
 
 async function deleteBrands(ctx: MutationCtx) {
   const rows = await ctx.db.query("brands").take(DELETE_BATCH_SIZE);
+  for (const row of rows) await ctx.db.delete(row._id);
+  return rows.length;
+}
+
+async function deleteNotifications(ctx: MutationCtx) {
+  const rows = await ctx.db.query("notifications").take(DELETE_BATCH_SIZE);
   for (const row of rows) await ctx.db.delete(row._id);
   return rows.length;
 }
@@ -103,6 +110,7 @@ const deleteTablePageHandlers: Record<WipeTable, DeleteTablePageHandler> = {
   auditFindings: deleteAuditFindings,
   auditReports: deleteAuditReports,
   brands: deleteBrands,
+  notifications: deleteNotifications,
   workspaceInvites: deleteWorkspaceInvites,
   workspaceMembers: deleteWorkspaceMembers,
   workspaces: deleteWorkspaces,
@@ -223,6 +231,7 @@ export const wipeAllData = action({
     const tableOrder = [
       "auditFindings",
       "auditReports",
+      "notifications",
       "brands",
       "workspaceInvites",
       "workspaceMembers",
@@ -238,6 +247,7 @@ export const wipeAllData = action({
     const deletedTables: Record<(typeof tableOrder)[number], number> = {
       auditFindings: 0,
       auditReports: 0,
+      notifications: 0,
       brands: 0,
       workspaceInvites: 0,
       workspaceMembers: 0,
