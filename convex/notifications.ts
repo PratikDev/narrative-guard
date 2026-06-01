@@ -9,12 +9,29 @@ export const listMine = query({
   args: {},
   handler: async (ctx) => {
     const userId = await requireAuthUserId(ctx);
+    const now = Date.now();
 
-    return await ctx.db
+    const notifications = await ctx.db
       .query("notifications")
       .withIndex("by_user_and_created_at", (q) => q.eq("userId", userId))
       .order("desc")
       .take(NOTIFICATION_PAGE_SIZE);
+
+    return await Promise.all(
+      notifications.map(async (notification) => {
+        const invite = notification.inviteId
+          ? await ctx.db.get(notification.inviteId)
+          : null;
+
+        return {
+          ...notification,
+          inviteStatus: invite?.status ?? null,
+          inviteExpiresAt: invite?.expiresAt ?? null,
+          inviteCanRespond:
+            invite?.status === "pending" && invite.expiresAt >= now,
+        };
+      })
+    );
   },
 });
 

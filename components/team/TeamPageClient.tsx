@@ -10,9 +10,9 @@ import {
 	UserPlus,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
-import { CopyButton } from "@/components/shared/CopyButton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingState } from "@/components/shared/LoadingState";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -95,11 +95,9 @@ export function TeamPageClient() {
 	const updateMemberRole = useMutation(api.workspace.updateMemberRole);
 	const [email, setEmail] = useState("");
 	const [role, setRole] = useState<InviteRole>("member");
-	const [inviteUrl, setInviteUrl] = useState("");
 	const [workspaceNameDraft, setWorkspaceNameDraft] = useState<string | null>(
 		null,
 	);
-	const [statusMessage, setStatusMessage] = useState("");
 	const [errorMessage, setErrorMessage] = useState("");
 
 	if (isLoading || !workspaceId || !activeWorkspace || !activeMembership) {
@@ -115,7 +113,6 @@ export function TeamPageClient() {
 		if (!workspaceId || !canManageSettings || !workspaceName.trim()) return;
 
 		setErrorMessage("");
-		setStatusMessage("");
 
 		try {
 			await updateWorkspace({
@@ -123,7 +120,7 @@ export function TeamPageClient() {
 				name: workspaceName,
 			});
 			setWorkspaceNameDraft(null);
-			setStatusMessage("Workspace settings updated.");
+			toast.success("Workspace settings updated");
 		} catch (error) {
 			setErrorMessage(
 				error instanceof Error ? error.message : "Could not update workspace.",
@@ -135,17 +132,14 @@ export function TeamPageClient() {
 		if (!workspaceId || !canInviteRole(actorRole, role)) return;
 
 		setErrorMessage("");
-		setStatusMessage("");
-		setInviteUrl("");
 
 		try {
-			const result = await inviteMember({
+			await inviteMember({
 				workspaceId,
 				email,
 				role,
 			});
-			setInviteUrl(`${window.location.origin}${result.invitePath}`);
-			setStatusMessage("Invite link created.");
+			toast.success("Invitation sent successfully");
 			setEmail("");
 			setRole("member");
 		} catch (error) {
@@ -306,7 +300,8 @@ export function TeamPageClient() {
 					<CardHeader>
 						<CardTitle>Invite teammate</CardTitle>
 						<CardDescription>
-							Create a link that the invited person can open after signing in.
+							Send an invitation the teammate can accept from notifications
+							after signing in.
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-4">
@@ -340,15 +335,6 @@ export function TeamPageClient() {
 								Invite
 							</Button>
 						</div>
-						{statusMessage ? (
-							<p className="text-sm text-muted-foreground">{statusMessage}</p>
-						) : null}
-						{inviteUrl ? (
-							<div className="flex items-center gap-2 rounded-lg border bg-muted/30 p-2">
-								<p className="min-w-0 flex-1 truncate text-sm">{inviteUrl}</p>
-								<CopyButton content={inviteUrl} />
-							</div>
-						) : null}
 					</CardContent>
 				</Card>
 			) : null}

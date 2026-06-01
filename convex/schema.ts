@@ -53,6 +53,7 @@ const workspaceInviteRole = v.union(v.literal("admin"), v.literal("member"));
 const workspaceInviteStatus = v.union(
   v.literal("pending"),
   v.literal("accepted"),
+  v.literal("declined"),
   v.literal("revoked"),
   v.literal("expired")
 );
