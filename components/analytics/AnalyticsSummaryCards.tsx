@@ -21,7 +21,7 @@ export function AnalyticsSummaryCards({ filters }: Props) {
     prevToTs: prev.toTs,
   });
 
-  if (data === undefined) {
+  if (data === undefined || data === null) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (
