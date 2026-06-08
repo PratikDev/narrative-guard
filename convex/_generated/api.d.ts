@@ -10,15 +10,19 @@
 
 import type * as analytics from "../analytics.js";
 import type * as audit from "../audit.js";
+import type * as auditDraft from "../auditDraft.js";
 import type * as auth from "../auth.js";
 import type * as brand from "../brand.js";
+import type * as docs from "../docs.js";
 import type * as http from "../http.js";
 import type * as lib_auditContentTypes from "../lib/auditContentTypes.js";
 import type * as lib_auditPrompts from "../lib/auditPrompts.js";
 import type * as lib_auditScoring from "../lib/auditScoring.js";
+import type * as lib_notificationHelpers from "../lib/notificationHelpers.js";
 import type * as lib_requireAuth from "../lib/requireAuth.js";
 import type * as lib_workspaceAuth from "../lib/workspaceAuth.js";
 import type * as maintenance from "../maintenance.js";
+import type * as notifications from "../notifications.js";
 import type * as rag from "../rag.js";
 import type * as report from "../report.js";
 import type * as viewer from "../viewer.js";
@@ -33,15 +37,19 @@ import type {
 declare const fullApi: ApiFromModules<{
   analytics: typeof analytics;
   audit: typeof audit;
+  auditDraft: typeof auditDraft;
   auth: typeof auth;
   brand: typeof brand;
+  docs: typeof docs;
   http: typeof http;
   "lib/auditContentTypes": typeof lib_auditContentTypes;
   "lib/auditPrompts": typeof lib_auditPrompts;
   "lib/auditScoring": typeof lib_auditScoring;
+  "lib/notificationHelpers": typeof lib_notificationHelpers;
   "lib/requireAuth": typeof lib_requireAuth;
   "lib/workspaceAuth": typeof lib_workspaceAuth;
   maintenance: typeof maintenance;
+  notifications: typeof notifications;
   rag: typeof rag;
   report: typeof report;
   viewer: typeof viewer;

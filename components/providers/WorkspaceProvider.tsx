@@ -36,6 +36,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 	const getOrCreateDefaultWorkspace = useMutation(
 		api.workspace.getOrCreateDefaultWorkspace,
 	);
+	const syncPendingInviteNotifications = useMutation(
+		api.workspace.syncPendingInviteNotifications,
+	);
 	const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<
 		Id<"workspaces"> | undefined
 	>(() => {
@@ -48,6 +51,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 		);
 	});
 	const isCreatingDefaultWorkspace = useRef(false);
+	const didSyncPendingInviteNotifications = useRef(false);
 
 	useEffect(() => {
 		if (workspaces === undefined || workspaces.length) return;
@@ -66,6 +70,15 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
 				isCreatingDefaultWorkspace.current = false;
 			});
 	}, [getOrCreateDefaultWorkspace, workspaces]);
+
+	useEffect(() => {
+		if (workspaces === undefined || didSyncPendingInviteNotifications.current) {
+			return;
+		}
+
+		didSyncPendingInviteNotifications.current = true;
+		void syncPendingInviteNotifications();
+	}, [syncPendingInviteNotifications, workspaces]);
 
 	const selectWorkspace = useCallback((workspaceId: Id<"workspaces">) => {
 		setSelectedWorkspaceId(workspaceId);

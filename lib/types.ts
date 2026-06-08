@@ -1,4 +1,4 @@
-import type { Doc } from "@/convex/_generated/dataModel";
+import type { Doc, Id } from "@/convex/_generated/dataModel";
 import { dimensionScores } from "@/convex/schema";
 import { Infer } from "convex/values";
 
@@ -27,6 +27,13 @@ export type AuditReport = {
   id: string;
   brandId: string;
   brandName: string;
+  brandConstitutionVersionId?: Id<"brandConstitutionVersions"> | null;
+  brandConstitutionVersion: {
+    id: Id<"brandConstitutionVersions">;
+    version: number;
+    createdAt: number;
+  } | null;
+  retryOfReportId?: Doc<"auditReports">["_id"];
   auditor: {
     id: Doc<"users">["_id"];
     name: string | null;

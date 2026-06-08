@@ -3,6 +3,7 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { BrandVersionHistory } from "@/components/brands/BrandVersionHistory";
 import { BrandSetupForm } from "@/components/brands/BrandSetupForm";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { LoadingState } from "@/components/shared/LoadingState";
@@ -37,7 +38,10 @@ export function BrandEditPageClient({ brandId }: { brandId: string }) {
         actionLabel="Back to setup"
       />
     ) : (
-      <BrandSetupForm brand={brand} />
+      <div className="flex flex-col gap-6">
+        <BrandSetupForm brand={brand} />
+        <BrandVersionHistory brandId={brand._id} />
+      </div>
     );
 
   return (

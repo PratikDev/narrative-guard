@@ -58,6 +58,11 @@ export function BrandSetupForm({ brand }: { brand?: Doc<"brands"> }) {
 									className="min-h-80 h-120 resize-y"
 								/>
 							</label>
+							{isEditing ? (
+								<p className="text-sm leading-6 text-muted-foreground">
+									Saving constitution changes creates a new version.
+								</p>
+							) : null}
 							<p className="text-sm leading-6 text-muted-foreground">
 								Include tone, messaging pillars, banned phrases, approved
 								examples, audience notes, and any review rules the team should

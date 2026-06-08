@@ -26,6 +26,12 @@ export function LandingHeader() {
 					>
 						<Link href={APP_ROUTES.scoring}>Scoring</Link>
 					</Button>
+					<Button
+						variant="ghost"
+						asChild
+					>
+						<Link href={APP_ROUTES.docs}>Docs</Link>
+					</Button>
 					<HeaderAuthLink signedOutHref={dashboardSignInPath} />
 				</nav>
 			</div>

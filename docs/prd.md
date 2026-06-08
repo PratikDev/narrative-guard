@@ -2,845 +2,1120 @@
 
 ## 1. Product Overview
 
-Narrative Guard is a brand-audit platform that helps teams check whether written content matches a brand's constitution, voice, tone, claims policy, and messaging rules.
+Narrative Guard is a workspace-based brand audit platform for teams that need to check whether written content follows a brand constitution, voice, tone, claim policy, messaging rules, and content-type expectations.
 
-Users create brands, define each brand's constitution, and submit content for audit. The platform uses Convex, RAG, and AI scoring to produce a report with a final score, verdict, summary, findings, and recommendations.
+Users create workspaces, invite teammates, create brands inside a workspace, add a detailed Brand Constitution, and audit content against that constitution. The platform retrieves relevant constitution context through RAG, asks an AI model for structured audit dimensions and findings, and then calculates the final score and verdict with deterministic backend scoring logic.
 
-The product is currently in an early but functional phase. The main working loop is:
+The current product is functional for P1 usage:
 
-1. Create or update a brand.
-2. Add a detailed brand constitution.
-3. Index the constitution for RAG.
-4. Submit content for audit.
-5. Generate an AI-assisted audit report.
-6. Review score, verdict, findings, and recommendations.
-7. Access saved reports from dashboard/history.
+1. Users sign in with Google.
+2. Users work inside a selected workspace.
+3. Owners/admins create and edit brands.
+4. Members can read brand constitutions and run audits.
+5. Brand constitutions are indexed into RAG.
+6. Users submit content by content type.
+7. The backend generates an audit report.
+8. Reports include score, verdict, summary, rewrite, findings, issue types, evidence, and score breakdown.
+9. Users can search/filter history, re-audit from a report, download a PDF, and manage team access.
 
 ## 2. Goals
 
-### Current Goals
+### 2.1 Current Goals
 
-- Let users define brands with detailed brand constitutions.
-- Use brand-specific guidance during audits.
-- Generate structured audit reports for submitted content.
-- Score content consistently using AI output plus deterministic scoring logic.
-- Save audit history per authenticated user.
-- Protect user data behind Google login.
-- Provide a usable dashboard, setup flow, audit flow, and report detail flow.
+- Provide a usable workspace-based app for teams.
+- Let teams define brands with detailed Brand Constitutions.
+- Index each Brand Constitution for brand-specific RAG.
+- Audit content against selected brand guidance.
+- Support multiple content types with different scoring behavior.
+- Generate structured, saved audit reports.
+- Explain scoring clearly to non-technical users.
+- Let users download report PDFs.
+- Let teammates collaborate under workspace roles.
+- Protect data with Google login and server-side authorization.
 
-### Near-Term Goals
+### 2.2 Near-Term Goals
 
-- Improve report usability and finding-level UX.
-- Make audit results easier for teams to act on.
-- Improve brand constitution visibility and indexing status.
-- Add stronger history filtering and search.
-- Add re-audit/edit workflows.
-- Improve scoring precision through more calibration and test cases.
+- Improve manual QA coverage and add automated tests.
+- Add better report/finding analytics.
+- Add richer failed audit recovery.
+- Improve invite operations, such as email delivery.
+- Add optional owner transfer if workspace ownership needs to move.
 
-### Long-Term Goals
+### 2.3 Long-Term Goals
 
-- Team/workspace support.
-- Multiple users under the same organization.
-- Role-based access control.
+- Advanced workspace analytics.
+- User-wide finding analytics.
+- Brand-level score trends over time.
 - Batch audits.
-- Source-specific audit modes, such as social, article, ad, email, and landing page.
-- Advanced analytics across brands, users, and findings.
-- Retry support for failed audits.
-- Export/share report flows.
-- More configurable scoring and policy controls.
+- Public/shared reports.
+- CMS/social/document integrations.
+- Configurable scoring policies per workspace or brand.
+- Billing/plans if this becomes a SaaS product.
 
 ## 3. Target Users
 
-### Primary Users
+### 3.1 Primary Users
 
-Marketing teams, founders, content writers, editors, and brand managers who need to check whether content follows a brand's internal rules.
+- Marketing teams
+- Brand managers
+- Content writers
+- Editors
+- Founders and operators reviewing published content
 
-### Secondary Users
+### 3.2 Secondary Users
 
-QA teams and internal reviewers who need to compare expected brand quality against platform-generated scores.
+- QA teams
+- Internal reviewers
+- Agencies managing multiple brands or client workspaces
+- Brand consultants
 
-### Future Users
+## 4. Tech Stack
 
-Agencies, brand consultants, and enterprise teams managing multiple brands or client accounts.
-
-## 4. Current Tech Stack
-
-### Frontend
+### 4.1 Frontend
 
 - Next.js App Router
+- React 19
 - TypeScript
-- React
 - Tailwind CSS
 - shadcn/ui
+- Radix UI primitives
 - lucide-react icons
+- TanStack React Table
+- react-to-print for PDF/print export
 - Convex React client
 - Convex Auth Next.js integration
 
-### Backend
+### 4.2 Backend
 
 - Convex
 - Convex database
 - Convex queries, mutations, actions, and internal functions
-- Convex schema-driven types
+- Convex generated schema types
 - Convex Auth
 - `@convex-dev/rag`
 
-### Authentication
-
-- `@convex-dev/auth`
-- Google OAuth
-- Convex Auth tables
-- Route protection through Next.js `proxy.ts`
-
-### AI / RAG
+### 4.3 AI / RAG
 
 - Google Gemini
 - `gemini-embedding-001` for embeddings
 - `gemini-2.5-flash` for audit generation
-- `@convex-dev/rag` for constitution indexing and retrieval
-- AI SDK `generateText` with structured output handling
+- AI SDK `generateText`
+- AI SDK structured output with Zod schema validation
+- `@convex-dev/rag` for Brand Constitution indexing and retrieval
 
-### Tooling
+### 4.4 Tooling
 
 - Bun
 - ESLint
-- Convex codegen
 - TypeScript strict mode
+- Convex codegen
+- shadcn CLI helper script
 
-## 5. Current Architecture
+## 5. Application Routes
 
-### 5.1 Frontend Architecture
+### 5.1 Public Routes
 
-The app uses the Next.js App Router.
+- `/`: landing page.
+- `/signin`: Google sign-in page.
+- `/scoring`: public scoring guide for non-technical users.
 
-Main app areas:
+### 5.2 Authenticated App Routes
 
-- Dashboard
-- Brand setup
-- Brand edit
-- Audit page
-- Report detail page
-- History/report listing
-- Sign-in page
+- `/dashboard`: workspace dashboard with stats, recent reports, and brand health.
+- `/setup`: brand list, brand creation for owner/admin, constitution reading for members.
+- `/setup/[brandId]`: brand edit for owner/admin, read-only constitution view for members.
+- `/audit`: manual content audit form.
+- `/history`: searchable/filterable audit history.
+- `/reports/[reportId]`: report detail page.
+- `/team`: workspace members, invites, roles, role guide, and workspace settings.
+- `/invite/[token]`: invite acceptance page.
 
-Reusable UI is split into domain folders:
+### 5.3 App Shell
 
-- `components/audit`
-- `components/brands`
-- `components/dashboard`
-- `components/history`
-- `components/layout`
-- `components/reports`
-- `components/shared`
-- `components/ui`
+Authenticated routes use the app shell:
 
-shadcn components live under `components/ui`.
+- Sidebar navigation.
+- Workspace switcher.
+- Create workspace dialog.
+- Signed-in user footer.
+- Sign out action.
 
-Frontend data is fetched from Convex functions using generated API references and schema-derived types where applicable.
+## 6. Current Feature Set
 
-### 5.2 Backend Architecture
+### 6.1 Landing Page
 
-Convex is the main backend. It owns:
+The root route is a product landing page. It includes:
 
-- Persistent app data
-- Auth data
-- Brand records
-- Audit reports
-- Audit findings
-- RAG indexing
-- AI audit orchestration
-- Maintenance utilities
+- Header with auth-aware navigation.
+- Hero section.
+- Dashboard preview image.
+- History/report preview image.
+- Workflow section.
+- Supported audit types.
+- Report output explanation.
+- Scoring transparency link.
+- Use cases.
+- Final call to action.
 
-Public Convex functions are used for frontend-facing operations.
+### 6.2 Authentication
 
-Internal Convex functions are used for reusable backend-only logic, especially around constitution chunking/indexing and operational helpers.
+Authentication uses `@convex-dev/auth` with Google OAuth.
 
-### 5.3 RAG Architecture
+Current behavior:
 
-Brand constitutions are indexed into RAG using `@convex-dev/rag`.
+- Public pages are accessible without login.
+- Protected app pages require authentication.
+- Signed-in users are redirected away from `/signin`.
+- Google auth state is used by Convex functions.
+- Backend authorization derives identity server-side.
+- Client-provided user IDs are not trusted for authorization.
 
-Current RAG behavior:
+### 6.3 Workspaces
 
-- A brand constitution is converted into deterministic chunks.
-- Chunks are indexed under a brand-specific namespace.
-- Audit generation retrieves relevant constitution context for the submitted content.
-- Retrieved context is provided to the AI audit prompt.
-- The AI produces structured audit dimensions and findings.
-- The backend calculates final score and verdict deterministically.
+Workspaces are the top-level collaboration boundary.
 
-RAG is used to make audits brand-specific instead of relying only on the submitted prompt.
+Current behavior:
 
-### 5.4 Scoring Architecture
+- A default workspace is created for a user when needed.
+- Users can create additional workspaces from the sidebar workspace switcher.
+- Users can switch active workspace from the sidebar.
+- Selected workspace is stored in localStorage.
+- Dashboard, brands, audit form, report history, report details, and team page are scoped to the selected workspace.
+- Workspace data access is verified server-side.
+- Owners can rename a workspace from `/team`.
+- Workspace delete is intentionally not implemented.
 
-Scoring is intentionally split from business logic.
+### 6.4 Team Management
 
-Prompt and scoring configuration are stored separately from the main audit flow:
+The Team page supports workspace collaboration.
 
-- Audit prompt configuration lives separately.
-- Scoring weights, penalties, caps, and floors live separately.
-- Audit business logic calls into those helpers.
+Current behavior:
 
-Current scoring approach:
+- Users can view workspace members.
+- Users can see their current role.
+- Users can read a role guide.
+- Owners can invite admins and members.
+- Admins can invite members.
+- Invite links are generated and copied manually.
+- Invited users accept links at `/invite/[token]`.
+- Owners can change admin/member roles.
+- Owners can remove admins or members.
+- Admins can remove members.
+- Users cannot remove themselves.
+- Admins cannot invite admins.
+- Admins cannot manage owners or admins.
+- Pending invites can be revoked.
+- Duplicate pending invites are blocked.
+- Existing active members cannot be invited again.
+- Revoked, expired, wrong-email, and already-member invite errors are shown through shadcn alert UI.
 
-- AI scores smaller audit dimensions.
-- AI identifies findings with type and severity.
-- Backend calculates the final score.
-- Backend calculates the final verdict.
-- Penalties are applied for issues such as banned phrases, hype phrases, absolute claims, and direct contradictions.
-- Score caps and floors are used to keep verdict behavior predictable.
+### 6.5 Role Model
 
-The AI does not directly decide the final score as the only source of truth.
+There are exactly three roles.
 
-## 6. Current Data Model
+#### Owner
 
-### 6.1 Auth Tables
+Owner can:
 
-Convex Auth manages authentication-related tables, including users, sessions, accounts, verification codes, refresh tokens, and rate limits.
+- Rename workspace.
+- Invite admins.
+- Invite members.
+- Change admin/member roles.
+- Remove admins.
+- Remove members.
+- Create brands.
+- Edit brands.
+- Read brand constitutions.
+- Run audits.
+- View dashboard/history/reports.
+- Delete reports.
+- Download reports.
 
-These tables are owned by `@convex-dev/auth`.
+Owner cannot currently:
 
-### 6.2 Brands
+- Delete workspace.
+- Transfer ownership through a dedicated flow.
 
-A brand represents one company, product, or identity that content can be audited against.
+#### Admin
 
-Current brand fields include:
+Admin can:
 
-- Brand name
-- Brand description/info
-- Brand constitution
-- Owner user ID
-- Timestamps/status fields as required by implementation
+- Invite members.
+- Remove members.
+- Create brands.
+- Edit brands.
+- Read brand constitutions.
+- Run audits.
+- View dashboard/history/reports.
+- Delete reports.
+- Download reports.
 
-Important behavior:
+Admin cannot:
 
-- Brands are scoped to the authenticated user.
-- Brands do not use slugs.
-- Brand data is used as the parent entity for audit reports.
-- Constitution content is indexed for RAG.
+- Rename workspace.
+- Invite admins.
+- Change roles.
+- Remove owners.
+- Remove admins.
+- Delete workspace.
 
-### 6.3 Audit Reports
+#### Member
 
-An audit report represents one content audit run.
+Member can:
 
-Current report behavior:
+- Read brand constitutions.
+- Run audits.
+- View dashboard/history/reports.
+- Download reports.
+- View team members and role guide.
 
-- Belongs to a brand.
-- Belongs to a user.
-- Stores submitted content.
-- Stores final score.
-- Stores verdict.
-- Stores summary/reasoning.
-- Stores created time.
-- Loads on report detail page.
-- Appears in dashboard/history.
+Member cannot:
 
-Reports include `userId` even though they functionally belong to a brand. This supports future user-wide analytics and makes authorization/indexing easier.
+- Create brands.
+- Edit brands.
+- Delete reports.
+- Invite users.
+- Remove users.
+- Rename workspace.
+- Change roles.
 
-### 6.4 Audit Findings
+### 6.6 Brand Management
 
-Audit findings represent specific issues detected during an audit.
+Brands belong to workspaces.
 
-Current finding behavior:
+Current behavior:
 
-- Belongs to an audit report.
-- Belongs to a brand through the report.
-- Belongs to a user for future analytics.
-- Has severity.
-- Has issue type.
-- Has message/reasoning.
-- Has recommendation.
+- Owners/admins can create brands.
+- Owners/admins can edit brands.
+- Members can read Brand Constitutions.
+- Brand records include name, constitution, creator user ID, workspace ID, timestamps, and RAG status.
+- Brand constitutions are indexed after create/update.
+- RAG status is shown in the UI.
+- RAG errors are shown when indexing fails.
+- Existing brands are listed on setup and dashboard-related views.
+- Brand edit actions are hidden from members.
+- Brand deletion is not implemented.
+- Slugs are not used.
 
-Findings are stored separately instead of as an unbounded array on the report.
+### 6.7 RAG Indexing
 
-### 6.5 RAG Tables
+RAG is powered by `@convex-dev/rag`.
 
-RAG tables are managed through `@convex-dev/rag`.
+Current behavior:
 
-The app should treat these as implementation tables owned by the RAG component. App logic should interact with them through the RAG component APIs, not by manually depending on their internal structure.
+- Each brand has a brand-specific RAG namespace.
+- The Brand Constitution is indexed with a stable key.
+- Updating a Brand Constitution replaces the previous RAG entry.
+- RAG metadata includes brand ID and source type.
+- Audits search the brand namespace with hybrid search.
+- Audit generation receives retrieved context.
+- RAG tables are treated as component-owned implementation details.
 
-## 7. Current User Flows
+### 6.8 Audit
 
-### 7.1 Sign In Flow
+Users run manual audits from `/audit`.
 
-1. User opens the app.
-2. If not authenticated, user is routed to sign in.
+Current behavior:
+
+- User selects a ready brand.
+- User selects a content type.
+- User pastes content.
+- Backend creates a processing report.
+- Backend schedules audit generation.
+- Backend retrieves brand RAG context.
+- AI returns structured dimensions, summary, rewrite, and findings.
+- Backend calculates final score and verdict.
+- Backend saves report and findings.
+- User is routed to report detail.
+- Failed audits store failed status and error.
+
+Supported content types:
+
+- Generic text
+- Social post
+- Website copy
+- Email
+- Press release
+- Ad copy
+
+### 6.9 Re-Audit
+
+Users can re-audit from a completed report.
+
+Current behavior:
+
+- Completed report detail shows a Re-audit button.
+- Re-audit opens `/audit?sourceReportId=...`.
+- Audit form loads source report.
+- Brand is prefilled.
+- Content type is prefilled.
+- Rewritten content is prefilled as the new audit content.
+- User can submit a new audit.
+
+### 6.10 Reports
+
+Reports are saved audit outputs.
+
+Current report detail includes:
+
+- Back action.
+- Download PDF action.
+- Re-audit action for completed reports.
+- Delete report action for owner/admin.
+- Processing alert for processing reports.
+- Failure alert for failed reports.
+- Brand name.
+- Content type.
+- Created date.
+- Final score.
+- Verdict.
+- Summary.
+- Original/rewrite comparison with diff-style visual highlighting.
+- Copy rewritten content button.
+- Findings accordion.
+- Score breakdown accordion.
+
+Report delete behavior:
+
+- Only owner/admin can delete reports.
+- Deleting a report deletes associated findings.
+- Deleting a report does not delete the brand or constitution.
+
+### 6.11 PDF Download
+
+Completed reports can be downloaded/printed through the browser PDF flow.
+
+Current PDF content includes:
+
+- Report details.
+- Score and verdict.
+- Summary.
+- Original and rewritten content side by side.
+- Findings expanded.
+- Score breakdown expanded.
+
+The PDF intentionally excludes the interactive diff view and uses a print-friendly layout.
+
+### 6.12 History
+
+History is implemented with TanStack React Table.
+
+Current behavior:
+
+- Reports are paginated from Convex.
+- History supports search by brand/content/summary.
+- History supports verdict filtering.
+- History supports content type filtering.
+- Infinite load-more behavior triggers near the bottom.
+- Actions include open report, download completed report, and delete report for owner/admin.
+
+### 6.13 Dashboard
+
+Dashboard is workspace-scoped.
+
+Current dashboard includes:
+
+- Total reports.
+- Average score.
+- Verdict counts.
+- Recent reports.
+- Brand health summary.
+- Latest report links.
+- Create brand action for owner/admin.
+- Run audit action.
+
+### 6.14 Scoring Guide
+
+The public scoring guide explains how audit scoring works.
+
+Current sections include:
+
+- Simple final-score formula.
+- Verdict thresholds.
+- Content-type policy tabs.
+- Issue type reference.
+- Base penalty table.
+- Worked scoring example.
+- Score floors and caps explanation.
+
+### 6.15 Maintenance Utilities
+
+Maintenance utilities are development/admin-only.
+
+Current maintenance functions:
+
+- Wipe all app data.
+- Wipe auth data.
+- Wipe workspace data.
+- Wipe RAG namespaces.
+- Seed issue types for older findings if needed.
+
+Maintenance is disabled unless explicit Convex environment variables are set.
+
+## 7. Architecture
+
+### 7.1 Frontend Architecture
+
+The app uses Next.js App Router.
+
+Main folders:
+
+- `app/`: route entries.
+- `components/audit`: audit form and report subviews.
+- `components/brands`: brand setup, edit, selectors, RAG status.
+- `components/dashboard`: dashboard stats, recent reports, brand health.
+- `components/history`: report history table and filters.
+- `components/landing`: public landing page.
+- `components/layout`: authenticated app shell and sidebar.
+- `components/providers`: Convex and workspace providers.
+- `components/reports`: report detail, delete, download, printable report.
+- `components/scoring`: scoring guide UI.
+- `components/shared`: shared product UI.
+- `components/team`: team and invite acceptance UI.
+- `components/ui`: shadcn/ui primitives.
+- `hooks`: reusable frontend hooks.
+- `lib`: constants, types, scoring guide config, permissions, route helpers.
+
+Workspace selection is managed client-side by `WorkspaceProvider`.
+
+### 7.2 Backend Architecture
+
+Convex owns:
+
+- Auth data.
+- Workspace data.
+- Team membership/invites.
+- Brand data.
+- Audit report data.
+- Audit finding data.
+- RAG integration.
+- AI audit orchestration.
+- Maintenance utilities.
+
+Public Convex functions are used for frontend-facing operations. Internal Convex functions/actions are used for background audit processing and brand constitution indexing.
+
+### 7.3 Authorization Architecture
+
+Authorization rules live on the backend and are mirrored in the frontend only for UI visibility.
+
+Backend helpers:
+
+- `requireAuthUserId`
+- `requireWorkspaceMember`
+- `requireWorkspaceRole`
+- `resolveWorkspaceForQuery`
+- `resolveWorkspaceForMutation`
+- `canManageWorkspaceMember`
+
+Frontend helper:
+
+- `lib/workspace-permissions.ts`
+
+Frontend permission checks hide unavailable actions, but backend checks remain the source of truth.
+
+### 7.4 AI/RAG Architecture
+
+Audit generation flow:
+
+1. User submits audit.
+2. Convex creates a processing report.
+3. Convex schedules internal audit processing.
+4. Internal action loads report and brand.
+5. RAG searches the brand namespace.
+6. Prompt builder combines brand, content type policy, submitted content, and RAG context.
+7. Gemini returns structured output.
+8. Backend calculates final score.
+9. Backend saves report and findings.
+
+### 7.5 Scoring Architecture
+
+Scoring is intentionally separated from audit business logic.
+
+Config lives in:
+
+- `convex/lib/auditScoring.ts`
+- `convex/lib/auditContentTypes.ts`
+- `convex/lib/auditPrompts.ts`
+- `lib/audit-scoring-guide.ts`
+
+Final score formula:
+
+```text
+Final Score = Weighted dimension score - issue penalties
+```
+
+Then the backend applies:
+
+- Content-type-specific penalty multipliers.
+- Score caps for severe or risky cases.
+- Score floors for isolated non-severe issues.
+- Rounding and clamp to 0-100.
+
+The AI does not decide the final score alone.
+
+## 8. Data Model
+
+### 8.1 Auth Tables
+
+Auth tables are managed by `@convex-dev/auth`.
+
+They include users, sessions, accounts, verification codes, refresh tokens, and rate limits.
+
+### 8.2 Workspaces
+
+Fields:
+
+- `name`
+- `createdByUserId`
+- `createdAt`
+- `updatedAt`
+
+Indexes:
+
+- `by_created_by_user`
+
+### 8.3 Workspace Members
+
+Fields:
+
+- `workspaceId`
+- `userId`
+- `role`: `owner`, `admin`, `member`
+- `status`: `active`, `removed`
+- `createdAt`
+- `updatedAt`
+
+Indexes:
+
+- `by_workspace`
+- `by_user`
+- `by_workspace_and_user`
+
+### 8.4 Workspace Invites
+
+Fields:
+
+- `workspaceId`
+- `email`
+- `role`: `admin`, `member`
+- `tokenHash`
+- `status`: `pending`, `accepted`, `revoked`, `expired`
+- `invitedByUserId`
+- `expiresAt`
+- `createdAt`
+- `updatedAt`
+
+Indexes:
+
+- `by_token_hash`
+- `by_workspace`
+- `by_email`
+
+Security note:
+
+- The raw invite token is returned once to the inviter.
+- Only the token hash is stored.
+
+### 8.5 Brands
+
+Fields:
+
+- `userId`
+- `workspaceId`
+- `name`
+- `constitution`
+- `ragStatus`
+- `ragError`
+- `ragEntryId`
+- `ragIndexedAt`
+- `createdAt`
+- `updatedAt`
+
+Indexes:
+
+- `by_user`
+- `by_workspace`
+- `by_workspace_and_updated`
+
+### 8.6 Audit Reports
+
+Fields:
+
+- `userId`
+- `workspaceId`
+- `brandId`
+- `contentType`
+- `originalContent`
+- `score`
+- `verdict`
+- `summary`
+- `toneAlignment`
+- `messagingAlignment`
+- `bannedPhraseSafety`
+- `audienceFit`
+- `clarityAndTrust`
+- `rewriteSuggestion`
+- `status`
+- `error`
+- `createdAt`
+- `updatedAt`
+
+Indexes:
+
+- `by_user_created`
+- `by_workspace_created`
+- `by_brand_created`
+- `by_created`
+- `by_verdict`
+- `by_user_verdict`
+- `by_workspace_verdict`
+- `by_brand_verdict`
+
+### 8.7 Audit Findings
+
+Fields:
+
+- `userId`
+- `workspaceId`
+- `reportId`
+- `brandId`
+- `sentence`
+- `reason`
+- `evidence`
+- `severity`: `low`, `medium`, `high`
+- `issueType`
+- `createdAt`
+
+Issue types:
+
+- `mild_style`
+- `hype_phrase`
+- `banned_phrase`
+- `absolute_claim`
+- `direct_contradiction`
+
+Indexes:
+
+- `by_user`
+- `by_workspace`
+- `by_report`
+- `by_brand`
+
+### 8.8 RAG Tables
+
+RAG tables are owned by `@convex-dev/rag`.
+
+Application code should use the RAG component API instead of depending on internal RAG table structure.
+
+## 9. User Flows
+
+### 9.1 Sign-In Flow
+
+1. User opens a protected page.
+2. Middleware redirects to `/signin`.
 3. User signs in with Google.
-4. Auth state is stored through Convex Auth.
-5. App routes become available.
+4. Auth state is stored by Convex Auth.
+5. User is redirected back to the requested page or dashboard.
 
-### 7.2 Brand Creation Flow
+### 9.2 Workspace Flow
 
-1. User opens brand setup.
-2. User enters brand information.
-3. User enters brand constitution.
-4. User submits the form.
-5. Convex creates the brand for the current user.
-6. Constitution is indexed for RAG.
-7. Brand appears in saved brand lists.
+1. User signs in.
+2. If no workspace exists, the app creates a default workspace.
+3. User selects a workspace from sidebar.
+4. User can create a new workspace from the switcher.
+5. Owner can rename workspace from `/team`.
+6. All app data is loaded for the selected workspace.
 
-### 7.3 Brand Edit Flow
+### 9.3 Invite Flow
 
-1. User sees a saved brand in setup/dashboard.
-2. User clicks the edit icon.
-3. User is routed to the brand edit page.
-4. Existing brand info is loaded.
-5. User updates brand information or constitution.
-6. Convex updates the brand.
-7. Constitution chunks/RAG index are replaced.
-8. Future audits use the updated brand guidance.
+1. Owner/admin opens `/team`.
+2. Owner/admin enters email and role.
+3. Convex validates role permissions.
+4. Convex blocks duplicate active members and duplicate pending invites.
+5. Convex stores invite token hash.
+6. UI shows one-time invite URL.
+7. Invited user opens `/invite/[token]`.
+8. User signs in if needed.
+9. Convex validates token, status, expiry, and email.
+10. User is added to workspace.
+11. Invite status becomes accepted.
 
-### 7.4 Audit Flow
+### 9.4 Brand Flow
 
-1. User opens audit page.
-2. User selects a brand.
-3. User pastes content to audit.
-4. User starts audit.
-5. Backend fetches brand and user ownership.
-6. Backend retrieves relevant RAG context from the brand constitution.
-7. AI generates structured audit output.
-8. Backend calculates final score and verdict.
-9. Report and findings are saved.
-10. User is routed to the report detail page.
+1. Owner/admin opens `/setup`.
+2. User creates or edits brand.
+3. Convex saves brand in current workspace.
+4. RAG indexing starts.
+5. UI shows RAG status.
+6. Future audits use the latest indexed Brand Constitution.
 
-### 7.5 Report Detail Flow
+Member behavior:
 
-1. User lands on `/reports/[reportId]`.
-2. App loads the report from Convex.
-3. App verifies the report belongs to the current user.
-4. App displays score, verdict, summary, findings, and related brand info.
-5. Refreshing the page reloads the same saved report.
+1. Member opens `/setup` or `/setup/[brandId]`.
+2. Member can read Brand Constitutions.
+3. Member cannot edit or create brands.
 
-### 7.6 Dashboard / History Flow
+### 9.5 Audit Flow
 
-1. User opens dashboard or history.
-2. App lists saved brands and recent reports.
-3. User can inspect previous reports.
-4. User can navigate to brand edit from saved brand items.
-5. User can navigate to report detail from report items.
+1. User opens `/audit`.
+2. User selects a ready brand.
+3. User selects content type.
+4. User enters content.
+5. User starts audit.
+6. Convex creates report with `processing` status.
+7. Internal action processes audit.
+8. Report becomes `complete` or `failed`.
+9. User reviews report detail.
 
-### 7.7 Maintenance Wipe Flow
+### 9.6 Re-Audit Flow
 
-This is an admin/development utility, not a normal user feature.
+1. User opens a completed report.
+2. User clicks Re-audit.
+3. Audit page loads the source report.
+4. Brand/content type are prefilled.
+5. Rewrite suggestion is used as the new content.
+6. User submits another audit.
 
-1. Operator enables wipe mode using Convex env vars.
-2. Operator provides confirmation text and secret token.
-3. Convex deletes app tables.
-4. Convex deletes auth tables.
-5. Convex deletes RAG namespaces.
-6. Existing data is removed.
+### 9.7 Report History Flow
 
-This should remain disabled by default.
+1. User opens `/history`.
+2. Reports load by selected workspace.
+3. User searches or filters reports.
+4. User opens report detail.
+5. Owner/admin can delete reports.
+6. User can download completed reports.
 
-## 8. Current UI Requirements
+### 9.8 Maintenance Wipe Flow
 
-### 8.1 Global UI
+1. Operator enables wipe env var.
+2. Operator provides secret token.
+3. Operator provides confirmation string.
+4. Convex deletes app tables.
+5. Convex deletes auth tables.
+6. Convex deletes RAG namespaces.
 
-- App should feel like a practical internal tool.
-- Navigation should be predictable and compact.
-- Pages should avoid marketing-style layout.
-- Empty states should tell the user what to do next.
-- Loading states should make backend activity visible.
-- Destructive/admin actions should not be exposed casually.
+## 10. Functional Requirements
 
-### 8.2 Dashboard
+### 10.1 Authentication
 
-Dashboard should show:
+- Users must sign in with Google for protected app pages.
+- Sign-in page must support safe redirect after login.
+- Backend functions must derive identity server-side.
+- Frontend must not provide user IDs for authorization.
 
-- Existing brands
-- Recent audit reports
-- Quick access to audit flow
-- Edit icon for each listed brand
-- Clear empty state if no brands or reports exist
+### 10.2 Workspace
 
-### 8.3 Brand Setup
+- User must always operate inside a workspace.
+- User can create workspaces.
+- User can switch workspaces.
+- Active workspace must persist after refresh.
+- Workspace access must be checked server-side.
+- Owner can rename workspace.
+- Workspace delete is not available.
 
-Brand setup should support:
+### 10.3 Team
 
-- Creating a new brand
-- Entering core brand information
-- Entering constitution/guidelines
-- Saving the brand
-- Showing validation errors
-- Reusing the same form logic for edit mode
+- Users can view active workspace members.
+- Owners/admins can create invite links.
+- Owners can invite admins/members.
+- Admins can invite members only.
+- Owners can change admin/member roles.
+- Owners can remove admins/members.
+- Admins can remove members only.
+- Users cannot remove themselves.
+- Invite errors must be visible with alert UI.
 
-### 8.4 Brand Edit
+### 10.4 Brand Management
 
-Brand edit should support:
+- Owner/admin can create brands.
+- Owner/admin can edit brands.
+- Member can read Brand Constitutions.
+- Brand Constitution is required.
+- Brand Constitution must be indexed into RAG.
+- Updating a Brand Constitution must replace indexed guidance.
+- Brand deletion is not available.
 
-- Loading existing brand data
-- Updating brand info
-- Updating constitution
-- Re-indexing constitution after save
-- Returning to relevant previous flow or dashboard
+### 10.5 Auditing
 
-### 8.5 Audit Page
+- User can audit content under current workspace.
+- User can only audit brands in an accessible workspace.
+- User can audit only ready brands.
+- User must select content type.
+- Audit must use RAG context from selected brand.
+- Audit must save report and findings.
+- Audit must handle AI/RAG failures gracefully.
 
-Audit page should support:
+### 10.6 Reports
 
-- Brand selection
-- Content input
-- Submit/run audit action
-- Disabled state when required inputs are missing
-- Loading state while audit runs
-- Navigation to report detail after success
-- Error state if audit fails
+- User can view workspace reports.
+- User can view report detail after refresh.
+- User can download completed reports as PDF.
+- User can re-audit completed reports.
+- Owner/admin can delete reports.
+- Deleting a report must delete findings.
+- Deleting a report must not delete the brand.
 
-### 8.6 Report Detail Page
+### 10.7 History
 
-Report detail should show:
+- History must be workspace-scoped.
+- History must support pagination.
+- History must support search.
+- History must support verdict filter.
+- History must support content type filter.
 
-- Brand name
-- Submitted content
-- Final score
-- Verdict
-- Summary
-- Findings
-- Recommendations
-- Created date/time
+### 10.8 Scoring
 
-Findings should become more structured over time with:
+- Scoring guide must explain final score in non-technical language.
+- Scoring guide must show content type policies.
+- Scoring guide must show weights, penalties, caps, and issue types.
+- Backend must calculate final score and verdict.
 
-- Severity badges
-- Issue type labels
-- Grouping by category
-- Clear recommendation copy
+### 10.9 Maintenance
 
-### 8.7 History
+- Wipe utility must be disabled by default.
+- Wipe utility must require env enablement.
+- Wipe utility must require token and confirmation.
+- Wipe utility must delete app, workspace, auth, and RAG data.
 
-History should show:
+## 11. Non-Functional Requirements
 
-- Prior reports
-- Brand association
-- Score
-- Verdict
-- Created date
-- Navigation to report detail
+### 11.1 Security
 
-Future history should support:
+- No secrets in source control.
+- OAuth credentials stored in environment variables.
+- Google AI key stored in Convex environment.
+- Invite tokens stored as hashes only.
+- Backend authorization must not trust client role checks.
+- Workspace data must not leak across memberships.
+- Maintenance wipe must be protected.
 
-- Filtering by brand
-- Filtering by verdict
-- Date filtering
-- Search by submitted content
+### 11.2 Reliability
 
-## 9. Functional Requirements
+- Failed audits should show failure state.
+- Failed RAG indexing should show error state.
+- Report detail should handle processing, complete, and failed states.
+- Invite accept/revoke/expired errors should be visible.
+- Brand update should replace active RAG guidance.
 
-### 9.1 Authentication
+### 11.3 Performance
 
-- Users must authenticate with Google.
-- Unauthenticated users should not access protected app pages.
-- Authenticated users should only see their own brands, reports, and findings.
-- Backend functions must derive user identity server-side.
-- Frontend must not pass user IDs for authorization decisions.
+- Workspace/report/history queries should use indexes.
+- Report history should paginate.
+- Findings must remain separate from reports.
+- Brand constitutions should use RAG component APIs.
+- Avoid unbounded arrays inside documents.
 
-### 9.2 Brand Management
+### 11.4 Type Safety
 
-- User can create a brand.
-- User can edit a brand.
-- User can view saved brands.
-- Brand constitution must be stored.
-- Brand constitution must be indexed for RAG.
-- Updating constitution must update the RAG index.
-- Brand records must be scoped by user.
-
-### 9.3 Auditing
-
-- User can select a brand.
-- User can submit content for audit.
-- Audit must use the selected brand constitution.
-- Audit must retrieve relevant RAG context.
-- Audit must generate structured findings.
-- Audit must calculate final score server-side.
-- Audit must calculate verdict server-side.
-- Audit report must be saved.
-- Audit findings must be saved.
-- User must be routed to report detail after success.
-
-### 9.4 Reports
-
-- User can view saved reports.
-- User can refresh report detail pages.
-- Reports must be linked to brands.
-- Reports must be scoped by user.
-- Findings must be linked to reports.
-- Report detail should be stable even after page refresh.
-
-### 9.5 Maintenance
-
-- App must support a protected wipe utility for development/admin reset.
-- Wipe must require explicit enablement through environment variable.
-- Wipe must require a secret token.
-- Wipe must require confirmation text.
-- Wipe must delete app, auth, and RAG data.
-
-## 10. Non-Functional Requirements
-
-### 10.1 Security
-
-- No secrets should be committed.
-- OAuth credentials must be configured through environment variables.
-- Google API keys must be stored in Convex environment variables or secure runtime config.
-- Backend authorization must never trust client-passed user IDs.
-- Maintenance wipe must be disabled by default.
-- Data must be isolated per user.
-
-### 10.2 Reliability
-
-- Audit generation should handle AI failures gracefully.
-- Failed audits should not create broken report pages.
-- RAG indexing should be repeatable.
-- Brand updates should not leave stale constitution chunks.
-- Report pages should continue working after refresh.
-
-### 10.3 Performance
-
-- Lists should use indexed Convex queries.
-- Large report histories should eventually use pagination.
-- Findings should stay in a separate table to avoid unbounded report documents.
-- Constitution chunks should be managed through RAG component APIs.
-- Avoid unnecessary frontend client components.
-
-### 10.4 Type Safety
-
-- Use TypeScript throughout.
-- Use Convex generated schema types.
-- Avoid duplicated frontend-only types where Convex types are available.
+- Use TypeScript.
+- Use Convex generated types where possible.
+- Keep Convex validators on all functions.
 - Avoid `any`.
-- Keep validators on all Convex functions.
-- Keep shared scoring and prompt contracts explicit.
+- Keep schema and frontend types aligned.
 
-### 10.5 Maintainability
+### 11.5 Maintainability
 
-- Keep business logic separate from configurable prompts and scoring rules.
-- Avoid duplicate logic.
-- Keep files small enough to understand.
-- Prefer local helpers only when logic is truly local.
-- Shared backend logic should live in reusable helpers/internal functions.
-- UI components should be split by feature/domain.
+- Keep prompt/scoring config separate from audit business logic.
+- Keep permission helpers reusable.
+- Keep feature UI in domain folders.
+- Keep shadcn primitives in `components/ui`.
+- Keep files understandable and scoped.
 
-### 10.6 Usability
+### 11.6 Usability
 
-- Main workflows should be obvious without instructions.
-- Saved brands should be editable from every place they are listed.
-- Audit reports should explain why a score was given.
-- Recommendations should be actionable.
-- Loading, empty, and error states should be clear.
+- Main workflows should be discoverable from sidebar.
+- Members should not see actions they cannot use.
+- Destructive actions require confirmation.
+- Errors should use visible alert UI.
+- Loading and empty states should be clear.
+- Report output should be understandable without developer explanation.
 
-## 11. Environment Variables
+## 12. Environment Variables
 
-### 11.1 Required
+### 12.1 Next.js
 
-- `NEXT_PUBLIC_CONVEX_URL`
 - `CONVEX_DEPLOYMENT`
+- `NEXT_PUBLIC_CONVEX_URL`
+- `NEXT_PUBLIC_CONVEX_SITE_URL`
+
+### 12.2 Convex / AI / Auth
+
 - `GOOGLE_GENERATIVE_AI_API_KEY`
+- `SITE_URL`
 - `AUTH_GOOGLE_ID`
 - `AUTH_GOOGLE_SECRET`
-- `SITE_URL`
 - `JWT_PRIVATE_KEY`
 - `JWKS`
 
-### 11.2 Maintenance / Development
+Convex auth config also reads `CONVEX_SITE_URL`.
+
+### 12.3 Maintenance
 
 - `ENABLE_WIPE_ALL_DATA`
 - `WIPE_ALL_DATA_TOKEN`
 
-### 11.3 Notes
+### 12.4 Notes
 
-- `JWT_PRIVATE_KEY` is used by Convex Auth to sign JWTs.
-- `JWKS` is the public key set used to verify issued JWTs.
-- Google OAuth credentials are required for login.
-- Google Generative AI key is required for embeddings and audit generation.
-- Wipe variables should not be enabled in production unless intentionally performing an admin reset.
-
-## 12. AI Audit Requirements
-
-### 12.1 Model Requirements
-
-Current selected models:
-
-- Embeddings: `gemini-embedding-001`
-- Audit generation: `gemini-2.5-flash`
-
-### 12.2 Audit Input
-
-Audit generation requires:
-
-- Brand ID
-- User identity
-- Submitted content
-- Retrieved brand constitution context
-
-### 12.3 Audit Output
-
-AI output should include:
-
-- Dimension scores
-- Summary
-- Findings
-- Issue type
-- Severity
-- Recommendation/reasoning
-
-AI should not be the sole authority for the final score.
-
-### 12.4 Final Score Calculation
-
-Backend scoring should:
-
-- Use AI-provided dimension scores.
-- Apply configured dimension weights.
-- Apply finding penalties.
-- Apply score caps for severe issues.
-- Apply score floors where needed for isolated non-severe issues.
-- Produce the final score.
-- Produce the final verdict.
-
-### 12.5 Verdicts
-
-Allowed verdicts:
-
-- `on_brand`
-- `needs_review`
-- `off_brand`
-
-General interpretation:
-
-- `on_brand`: content strongly follows the constitution.
-- `needs_review`: content is usable but has meaningful issues.
-- `off_brand`: content violates important brand rules or contains severe issues.
+- `JWT_PRIVATE_KEY` signs Convex Auth JWTs.
+- `JWKS` exposes public keys for JWT verification.
+- `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` are required for Google OAuth.
+- `GOOGLE_GENERATIVE_AI_API_KEY` is required for embeddings and audit generation.
+- Wipe variables should not be enabled in production except during intentional admin reset.
 
 ## 13. Current Known Product Behavior
 
-- A single risky/hype phrase can currently produce a `needs_review` score around the mid-60s.
-- Strongly aligned content should score high.
+- Strong aligned content should score high.
+- Mixed content generally lands in `needs_review`.
 - Clearly contradictory or risky content should score low.
-- Reports are saved and reloadable.
-- Brand updates update the constitution used for future audits.
-- Existing pre-auth data may not appear for authenticated users unless backfilled.
-- User data is scoped by authenticated user.
+- Verdict thresholds are currently:
+  - `on_brand`: score >= 85
+  - `needs_review`: score >= 65 and < 85
+  - `off_brand`: score < 65
+- A single non-severe issue can still result in `needs_review` because score floors protect otherwise acceptable content from falling too far.
+- Severe issues can cap the maximum score.
+- Reports include the auditor name/email when available.
+- Invite links are shown once because only token hashes are stored.
+- Expired pending invites are hidden from invite lists.
+- Workspace deletion and brand deletion are not implemented.
 
-## 14. Future Plans
+## 14. Out Of Scope For Current Version
 
-### 14.1 Audit UX Improvements
+- Workspace deletion.
+- Brand deletion.
+- Owner transfer.
+- Email delivery for invites.
+- Billing/plans.
+- Public report sharing.
+- Bulk import.
+- Direct CMS/social/document integrations.
+- Browser extension.
+- Human approval workflow.
+- Full retry system for failed audits.
+- Advanced analytics dashboard.
+- Automated test suite.
 
-Add:
+## 15. Future Plans
 
-- Better finding display
-- Finding severity badges
-- Issue type filters
-- Grouped recommendations
-- Highlighted problematic phrases if supported
-- Clear "what to change" section
-- Confidence or evidence indicators
+### 15.1 Team Enhancements
 
-### 14.2 Re-Audit Flow
+- Email invite delivery.
+- Owner transfer.
+- Workspace deletion with clear cascade policy.
+- Member action audit log.
+- Expired/revoked invite management UI.
 
-Add ability to:
+### 15.2 Analytics
 
-- Edit submitted content from a report
-- Re-run audit against the same brand
-- Compare old and new scores
-- Track audit iterations
+- Score trend by brand.
+- Score trend by workspace.
+- Most common issue types.
+- Findings by user.
+- Findings by content type.
+- On-brand/needs-review/off-brand rate over time.
 
-### 14.3 Report History Enhancements
+### 15.3 Audit Improvements
 
-Add:
+- Retry failed audits.
+- Retry failed RAG indexing.
+- Compare re-audit versions.
+- Store audit iterations.
+- Add user feedback on findings.
+- Add calibrated regression test set.
 
-- Pagination
-- Search
-- Brand filter
-- Verdict filter
-- Date range filter
-- Sort by score/date
-- Export report
+### 15.4 Brand Management
 
-### 14.4 Brand Constitution Management
+- Brand deletion.
+- Constitution version history.
+- Re-index button.
+- Indexed guidance preview.
+- Brand-specific scoring configuration.
 
-Add:
+### 15.5 Integrations
 
-- Indexing status
-- Last indexed timestamp
-- Chunk count
-- Re-index button
-- Preview indexed guidance
-- Constitution version history
-- Compare previous/current constitution
+- Social media ingestion.
+- CMS ingestion.
+- Google Docs/Notion ingestion.
+- Slack notifications.
+- Webhook/API export.
 
-### 14.5 Team / Workspace Support
+### 15.6 Testing
 
-Future workspace model should support:
-
-- Organization/workspace table
-- Workspace members
-- Roles such as owner, admin, editor, viewer
-- Brands belonging to workspace
-- Reports belonging to workspace
-- User-wide and workspace-wide analytics
-
-### 14.6 Analytics
-
-Future analytics can include:
-
-- Average score by brand
-- Score trend over time
-- Most common issue types
-- Most common banned phrases
-- Findings by user
-- Findings by source type
-- On-brand rate
-- Needs-review rate
-- Off-brand rate
-
-### 14.7 Source-Specific Audits
-
-Add audit modes for:
-
-- Social post
-- Blog/article
-- Landing page
-- Email
-- Advertisement
-- Product update
-- Press release
-
-Each mode can have different scoring sensitivity and formatting expectations.
-
-### 14.8 Retry / Failure Recovery
-
-Future retry support should include:
-
-- Retry failed AI generation
-- Retry failed RAG indexing
-- Show failed status clearly
-- Avoid duplicate reports on retry
-- Store failure reason for debugging
-
-### 14.9 Admin Features
-
-Potential admin features:
-
-- View system health
-- Wipe development data
-- Re-index all brands
-- Inspect RAG namespaces
-- Manage AI model settings
-- Manage scoring config
-
-### 14.10 Testing Improvements
-
-Add:
-
-- Unit tests for scoring config
-- Unit tests for verdict calculation
-- Integration tests for Convex audit flow
-- Manual QA prompts for brand/audit generation
-- Regression dataset with expected scores
-- Snapshot-style report output checks
-
-## 15. Out of Scope For Current Phase
-
-The following should not be treated as current functionality unless explicitly implemented later:
-
-- Multi-user organizations
-- Paid plans/billing
-- Public report sharing
-- Bulk CSV import
-- Direct CMS integrations
-- Browser extension
-- Slack/Notion/Google Docs integrations
-- Human approval workflow
-- Full audit retry system
-- Advanced analytics dashboard
-- Role-based access control
+- Unit tests for scoring.
+- Unit tests for permission helpers.
+- Convex integration tests for workspace access.
+- E2E tests for owner/admin/member flows.
+- Regression fixtures with expected scores.
 
 ## 16. Success Metrics
 
 ### 16.1 Product Metrics
 
-- Users can create a brand successfully.
-- Users can audit content successfully.
-- Reports are understandable without explanation.
-- Users can identify what needs to be changed.
-- Saved reports are easy to find again.
+- Users can create a workspace.
+- Users can invite teammates.
+- Users can create a brand.
+- Users can run an audit.
+- Reports are understandable.
+- Users can find old reports.
+- Users can download reports.
 
 ### 16.2 Quality Metrics
 
 - On-brand content usually scores high.
 - Mixed content usually lands in `needs_review`.
-- Clearly off-brand content usually scores low.
-- Similar inputs produce reasonably stable scores.
+- Off-brand content usually scores low.
 - Findings are specific and actionable.
+- Rewrites are usable as a next draft.
 
 ### 16.3 Technical Metrics
 
+- `bunx convex codegen` passes.
 - `bun run lint` passes.
 - `bun run build` passes.
-- Convex codegen passes.
-- No unauthorized data access between users.
-- Audit reports do not save incomplete/broken data.
+- Unauthorized workspace access is blocked.
+- Report deletion removes findings.
 - Constitution updates do not leave stale active RAG data.
 
-## 17. Manual QA Checklist
+## 17. Manual QA References
 
-### 17.1 Brand Flow
+Detailed QA docs live in:
 
-- Create a brand.
-- Confirm it appears in saved brand lists.
-- Edit the brand.
-- Confirm updated info appears.
-- Update constitution.
-- Confirm future audits reflect the new guidance.
+- `docs/testing-checklist.md`
+- `docs/team-features.md`
 
-### 17.2 Audit Flow
+Minimum smoke test:
 
-- Audit clearly on-brand content.
-- Audit mixed content.
-- Audit clearly off-brand content.
-- Confirm score and verdict are reasonable.
-- Confirm report detail opens after audit.
-- Refresh report detail and confirm it still loads.
-
-### 17.3 History Flow
-
-- Confirm new reports appear in dashboard/history.
-- Confirm each report links to the correct detail page.
-- Confirm reports show the correct brand.
-
-### 17.4 Auth Flow
-
-- Confirm signed-out users cannot access protected pages.
-- Confirm one user cannot see another user's brands or reports.
-
-### 17.5 Maintenance Flow
-
-- Confirm wipe does not run when disabled.
-- Confirm wipe requires token.
-- Confirm wipe requires confirmation text.
-- Confirm wipe removes app/auth/RAG data when explicitly enabled.
+1. Sign in.
+2. Create workspace.
+3. Create brand.
+4. Wait for RAG ready.
+5. Run audit.
+6. Open report.
+7. Download PDF.
+8. Re-audit.
+9. Invite member.
+10. Confirm member can run audit but cannot edit brand or delete reports.
 
 ## 18. Open Product Questions
 
-- Should brand constitutions support multiple sections/forms instead of one large text field?
-- Should audit scoring be configurable per brand?
+- Should workspace deletion exist, and what should happen to brands/reports/members?
+- Should owner transfer be required before production use?
+- Should invite links be recoverable, or should copy-once remain the security model?
+- Should brand constitutions become structured sections instead of one markdown field?
+- Should scoring be configurable per brand or per workspace?
 - Should users be able to mark AI findings as correct/incorrect?
-- Should score calibration be global or brand-specific?
-- Should report history keep every re-audit version?
-- Should the app support team workspaces before advanced analytics?
-- Should source type be required before audit?
-- Should findings include exact text spans from submitted content?
+- Should re-audits be linked as versions of a prior report?
+- Should reports be shareable outside the workspace?
+- Should social/CMS integrations return in P2, or stay out until permissions are easier?
 
 ## 19. Recommended Next Phase
 
-The recommended next phase is report and workflow polish.
+The recommended next phase is reliability and analytics.
 
 Priority order:
 
-1. Improve report detail UI.
-2. Add finding-level severity/type display.
-3. Add better loading/error/empty states for audit generation.
-4. Add report history filtering.
-5. Add re-audit flow.
-6. Add constitution indexing visibility.
-7. Add scoring regression tests.
-
-This phase should make the current core audit loop easier to trust before adding larger platform features.
+1. Add automated tests for scoring and permissions.
+2. Add workspace/brand/report analytics.
+3. Add retry support for failed audit or failed RAG indexing.
+4. Add owner transfer or workspace deletion policy if needed.
+5. Add email delivery for invites.
+6. Add report comparison for re-audits.

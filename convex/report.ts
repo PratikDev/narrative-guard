@@ -15,11 +15,21 @@ function toUiReport(
 	brand: Doc<"brands"> | null,
 	auditor: Doc<"users"> | null,
 	findings: Doc<"auditFindings">[],
+	brandConstitutionVersion: Doc<"brandConstitutionVersions"> | null,
 ) {
 	return {
 		id: report._id,
 		brandId: report.brandId,
 		brandName: brand?.name ?? "Deleted brand",
+		brandConstitutionVersionId: report.brandConstitutionVersionId ?? null,
+		brandConstitutionVersion: brandConstitutionVersion
+			? {
+					id: brandConstitutionVersion._id,
+					version: brandConstitutionVersion.version,
+					createdAt: brandConstitutionVersion.createdAt,
+				}
+			: null,
+		retryOfReportId: report.retryOfReportId,
 		auditor: {
 			id: report.userId,
 			name: auditor?.name ?? null,
@@ -103,7 +113,17 @@ export const listReports = query({
 					report._id,
 					membership.workspaceId,
 				);
-				return toUiReport(report, brand, auditor, findings);
+				const brandConstitutionVersion = report.brandConstitutionVersionId
+					? await ctx.db.get(report.brandConstitutionVersionId)
+					: null;
+
+				return toUiReport(
+					report,
+					brand,
+					auditor,
+					findings,
+					brandConstitutionVersion,
+				);
 			}),
 		);
 
@@ -134,8 +154,11 @@ export const getReportWithFindings = query({
 			report._id,
 			report.workspaceId,
 		);
+		const brandConstitutionVersion = report.brandConstitutionVersionId
+			? await ctx.db.get(report.brandConstitutionVersionId)
+			: null;
 
-		return toUiReport(report, brand, auditor, findings);
+		return toUiReport(report, brand, auditor, findings, brandConstitutionVersion);
 	},
 });
 
@@ -268,6 +291,11 @@ export const getBrandHealth = query({
 							) / completeReports.length,
 						)
 					: 0;
+				const latestReport = workspaceReports[0] ?? null;
+				const brandConstitutionVersion =
+					latestReport?.brandConstitutionVersionId
+						? await ctx.db.get(latestReport.brandConstitutionVersionId)
+						: null;
 
 				return {
 					brand: {
@@ -275,8 +303,14 @@ export const getBrandHealth = query({
 						name: brand.name,
 					},
 					averageScore,
-					latestReport: workspaceReports[0]
-						? toUiReport(workspaceReports[0], brand, null, [])
+					latestReport: latestReport
+						? toUiReport(
+								latestReport,
+								brand,
+								null,
+								[],
+								brandConstitutionVersion,
+							)
 						: null,
 					reportCount: workspaceReports.length,
 				};

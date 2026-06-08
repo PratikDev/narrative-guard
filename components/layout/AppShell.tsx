@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/sidebar";
 import { APP_ROUTES } from "@/lib/routes";
 import Link from "next/link";
+import { NotificationBell } from "../notifications/NotificationBell";
 import { AppSidebar } from "./app-sidebar";
 import { WorkspaceProvider } from "../providers/WorkspaceProvider";
 
@@ -27,7 +28,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 							orientation="vertical"
 							className="mr-2 data-[orientation=vertical]:h-4 my-auto"
 						/>
-						<Breadcrumb>
+						<Breadcrumb className="flex-1">
 							<BreadcrumbList>
 								<BreadcrumbItem className="hidden md:block">
 									<BreadcrumbLink asChild>
@@ -36,6 +37,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 								</BreadcrumbItem>
 							</BreadcrumbList>
 						</Breadcrumb>
+						<NotificationBell />
 					</header>
 					<div className="p-6">{children}</div>
 				</SidebarInset>

@@ -3,11 +3,13 @@ import { generateText, Output } from "ai";
 import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "./_generated/api";
+import type { Doc, Id } from "./_generated/dataModel";
 import {
   internalAction,
   internalMutation,
   internalQuery,
   mutation,
+  type MutationCtx,
 } from "./_generated/server";
 import {
   calculateFinalAuditScore,
@@ -16,6 +18,7 @@ import {
 } from "./lib/auditScoring";
 import { getAuditContentTypePolicy } from "./lib/auditContentTypes";
 import { buildAuditPrompt } from "./lib/auditPrompts";
+import { createNotification } from "./lib/notificationHelpers";
 import { requireAuthUserId } from "./lib/requireAuth";
 import { requireWorkspaceMember } from "./lib/workspaceAuth";
 import { brandNamespace, brandRag } from "./rag";
@@ -55,6 +58,49 @@ const auditResultSchema = z.object({
   ),
 });
 
+export async function createProcessingAuditReport(
+  ctx: MutationCtx,
+  args: {
+    userId: Id<"users">;
+    workspaceId: Id<"workspaces">;
+    brandId: Id<"brands">;
+    contentType: Doc<"auditReports">["contentType"];
+    originalContent: string;
+    retryOfReportId?: Id<"auditReports">;
+  }
+) {
+  const now = Date.now();
+  const constitutionVersion = await ctx.db
+    .query("brandConstitutionVersions")
+    .withIndex("by_brand_and_version", (q) => q.eq("brandId", args.brandId))
+    .order("desc")
+    .first();
+
+  return await ctx.db.insert("auditReports", {
+    userId: args.userId,
+    workspaceId: args.workspaceId,
+    brandId: args.brandId,
+    ...(constitutionVersion
+      ? { brandConstitutionVersionId: constitutionVersion._id }
+      : {}),
+    ...(args.retryOfReportId ? { retryOfReportId: args.retryOfReportId } : {}),
+    contentType: args.contentType,
+    originalContent: args.originalContent,
+    score: 0,
+    verdict: "needs_review",
+    summary: "Audit processing is underway.",
+    toneAlignment: 0,
+    messagingAlignment: 0,
+    bannedPhraseSafety: 0,
+    audienceFit: 0,
+    clarityAndTrust: 0,
+    rewriteSuggestion: "",
+    status: "processing",
+    createdAt: now,
+    updatedAt: now,
+  });
+}
+
 export const createManualAudit = mutation({
   args: {
     workspaceId: v.optional(v.id("workspaces")),
@@ -77,27 +123,14 @@ export const createManualAudit = mutation({
       throw new Error("Brand constitution is still indexing.");
     }
 
-    const now = Date.now();
     const content = args.content.trim();
 
-    const reportId = await ctx.db.insert("auditReports", {
+    const reportId = await createProcessingAuditReport(ctx, {
       userId,
       workspaceId: brand.workspaceId,
       brandId: args.brandId,
       contentType: args.contentType,
       originalContent: content,
-      score: 0,
-      verdict: "needs_review",
-      summary: "Audit processing is underway.",
-      toneAlignment: 0,
-      messagingAlignment: 0,
-      bannedPhraseSafety: 0,
-      audienceFit: 0,
-      clarityAndTrust: 0,
-      rewriteSuggestion: "",
-      status: "processing",
-      createdAt: now,
-      updatedAt: now,
     });
 
     await ctx.scheduler.runAfter(0, internal.audit.processManualAudit, {
@@ -105,6 +138,52 @@ export const createManualAudit = mutation({
     });
 
     return { reportId };
+  },
+});
+
+export const retryFailedAudit = mutation({
+  args: {
+    workspaceId: v.optional(v.id("workspaces")),
+    reportId: v.id("auditReports"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuthUserId(ctx);
+    const report = await ctx.db.get(args.reportId);
+
+    if (!report) {
+      throw new Error("Report not found.");
+    }
+    if (args.workspaceId && report.workspaceId !== args.workspaceId) {
+      throw new Error("Report not found.");
+    }
+    await requireWorkspaceMember(ctx, report.workspaceId, userId);
+
+    if (report.status !== "failed") {
+      throw new Error("Only failed audits can be retried.");
+    }
+
+    const brand = await ctx.db.get(report.brandId);
+    if (!brand || brand.workspaceId !== report.workspaceId) {
+      throw new Error("Brand not found.");
+    }
+    if (brand.ragStatus !== "ready") {
+      throw new Error("Brand constitution is still indexing.");
+    }
+
+    const retryReportId = await createProcessingAuditReport(ctx, {
+      userId,
+      workspaceId: report.workspaceId,
+      brandId: report.brandId,
+      contentType: report.contentType,
+      originalContent: report.originalContent,
+      retryOfReportId: report._id,
+    });
+
+    await ctx.scheduler.runAfter(0, internal.audit.processManualAudit, {
+      reportId: retryReportId,
+    });
+
+    return { reportId: retryReportId };
   },
 });
 
@@ -157,6 +236,7 @@ export const completeAudit = internalMutation({
   handler: async (ctx, args) => {
     const report = await ctx.db.get(args.reportId);
     if (!report) return null;
+    const brand = await ctx.db.get(report.brandId);
 
     const now = Date.now();
     await ctx.db.patch(args.reportId, {
@@ -189,6 +269,18 @@ export const completeAudit = internalMutation({
       });
     }
 
+    await createNotification(ctx, {
+      userId: report.userId,
+      workspaceId: report.workspaceId,
+      brandId: report.brandId,
+      reportId: args.reportId,
+      scope: "user",
+      type: "audit_completed",
+      title: "Audit completed",
+      message: `${brand?.name ?? "Your brand"} audit finished with a ${clampScore(args.score)}/100 score.`,
+      createdAt: now,
+    });
+
     return null;
   },
 });
@@ -201,12 +293,26 @@ export const failAudit = internalMutation({
   handler: async (ctx, args) => {
     const report = await ctx.db.get(args.reportId);
     if (!report) return null;
+    const brand = await ctx.db.get(report.brandId);
+    const now = Date.now();
 
     await ctx.db.patch(args.reportId, {
       status: "failed",
       error: args.error,
       summary: "The audit failed before scoring completed.",
-      updatedAt: Date.now(),
+      updatedAt: now,
+    });
+
+    await createNotification(ctx, {
+      userId: report.userId,
+      workspaceId: report.workspaceId,
+      brandId: report.brandId,
+      reportId: args.reportId,
+      scope: "user",
+      type: "audit_failed",
+      title: "Audit failed",
+      message: `${brand?.name ?? "Your brand"} audit failed before scoring completed.`,
+      createdAt: now,
     });
 
     return null;
