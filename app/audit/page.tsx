@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 type AuditPageProps = {
 	searchParams: Promise<{
 		sourceReportId?: string | string[];
+		draftId?: string | string[];
 	}>;
 };
 
@@ -12,6 +13,9 @@ export default async function AuditPage({ searchParams }: AuditPageProps) {
 	const sourceReportId = Array.isArray(params.sourceReportId)
 		? params.sourceReportId[0]
 		: params.sourceReportId;
+	const draftId = Array.isArray(params.draftId)
+		? params.draftId[0]
+		: params.draftId;
 
 	return (
 		<div className="space-y-6">
@@ -20,8 +24,9 @@ export default async function AuditPage({ searchParams }: AuditPageProps) {
 				description="Paste content, choose a brand and content type, then generate a mock brand-coherence report."
 			/>
 			<AuditForm
-				key={sourceReportId ?? "new-audit"}
+				key={draftId ?? sourceReportId ?? "new-audit"}
 				sourceReportId={sourceReportId}
+				draftId={draftId}
 			/>
 		</div>
 	);

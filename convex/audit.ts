@@ -58,7 +58,7 @@ const auditResultSchema = z.object({
   ),
 });
 
-async function createProcessingAuditReport(
+export async function createProcessingAuditReport(
   ctx: MutationCtx,
   args: {
     userId: Id<"users">;

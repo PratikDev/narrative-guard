@@ -9,6 +9,7 @@
  */
 
 import type * as audit from "../audit.js";
+import type * as auditDraft from "../auditDraft.js";
 import type * as auth from "../auth.js";
 import type * as brand from "../brand.js";
 import type * as docs from "../docs.js";
@@ -34,6 +35,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   audit: typeof audit;
+  auditDraft: typeof auditDraft;
   auth: typeof auth;
   brand: typeof brand;
   docs: typeof docs;

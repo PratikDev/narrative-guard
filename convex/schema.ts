@@ -17,6 +17,12 @@ const contentType = v.union(
   v.literal("ad_copy")
 );
 
+const auditDraftStatus = v.union(
+  v.literal("draft"),
+  v.literal("audited"),
+  v.literal("discarded")
+);
+
 const auditStatus = v.union(
   v.literal("idle"),
   v.literal("processing"),
@@ -169,6 +175,34 @@ export default defineSchema({
     .index("by_user_verdict", ["userId", "verdict"])
     .index("by_workspace_verdict", ["workspaceId", "verdict"])
     .index("by_brand_verdict", ["brandId", "verdict"]),
+
+  auditDrafts: defineTable({
+    workspaceId: v.id("workspaces"),
+    brandId: v.id("brands"),
+    userId: v.id("users"),
+    title: v.string(),
+    contentType,
+    content: v.string(),
+    status: auditDraftStatus,
+    reportId: v.optional(v.id("auditReports")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_workspace_and_status_and_updated", [
+      "workspaceId",
+      "status",
+      "updatedAt",
+    ])
+    .index("by_user_and_status_and_updated", [
+      "userId",
+      "status",
+      "updatedAt",
+    ])
+    .index("by_brand_and_status_and_updated", [
+      "brandId",
+      "status",
+      "updatedAt",
+    ]),
 
   auditFindings: defineTable({
     userId: v.id("users"),
