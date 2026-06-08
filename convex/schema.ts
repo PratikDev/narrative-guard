@@ -144,6 +144,7 @@ export default defineSchema({
     userId: v.id("users"),
     workspaceId: v.id("workspaces"),
     brandId: v.id("brands"),
+    retryOfReportId: v.optional(v.id("auditReports")),
     contentType,
     originalContent: v.string(),
 

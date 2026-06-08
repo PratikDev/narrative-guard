@@ -20,6 +20,7 @@ function toUiReport(
 		id: report._id,
 		brandId: report.brandId,
 		brandName: brand?.name ?? "Deleted brand",
+		retryOfReportId: report.retryOfReportId,
 		auditor: {
 			id: report.userId,
 			name: auditor?.name ?? null,

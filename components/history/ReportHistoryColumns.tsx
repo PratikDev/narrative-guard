@@ -2,13 +2,14 @@
 
 import { DeleteReportButton } from "@/components/reports/DeleteReportButton";
 import { DownloadReportButton } from "@/components/reports/DownloadReportButton";
+import { RetryAuditButton } from "@/components/reports/RetryAuditButton";
 import { AuditReportStatusBadge } from "@/components/shared/AuditReportStatusBadge";
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay";
 import { Button } from "@/components/ui/button";
 import type { Id } from "@/convex/_generated/dataModel";
 import { CONTENT_TYPE_LABELS } from "@/lib/constants";
 import { formatDate } from "@/lib/format";
-import { isCompletedAuditReport } from "@/lib/audit-report";
+import { isCompletedAuditReport, isFailedAuditReport } from "@/lib/audit-report";
 import type { AuditReport } from "@/lib/types";
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
@@ -104,6 +105,9 @@ export function getReportHistoryColumns({
 							report={row.original}
 							showLabel={false}
 						/>
+					) : null}
+					{isFailedAuditReport(row.original) ? (
+						<RetryAuditButton reportId={row.original.id as Id<"auditReports">} />
 					) : null}
 					{canDeleteReports ? (
 						<DeleteReportButton

@@ -6,6 +6,7 @@ import { FlaggedSentenceList } from "@/components/audit/FlaggedSentenceList";
 import { OriginalRewriteComparison } from "@/components/audit/OriginalRewriteComparison";
 import { DeleteReportButton } from "@/components/reports/DeleteReportButton";
 import { DownloadReportButton } from "@/components/reports/DownloadReportButton";
+import { RetryAuditButton } from "@/components/reports/RetryAuditButton";
 import BackButton from "@/components/shared/BackButton";
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay";
 import { StatusBadge } from "@/components/shared/StatusBadge";
@@ -58,6 +59,12 @@ export function ReportDetail({ report }: { report: AuditReport }) {
 							</Link>
 						</Button>
 					) : null}
+					{isFailed ? (
+						<RetryAuditButton
+							reportId={report.id as Id<"auditReports">}
+							showLabel
+						/>
+					) : null}
 				</div>
 				<DeleteReportButton
 					reportId={report.id as Id<"auditReports">}
@@ -101,6 +108,17 @@ export function ReportDetail({ report }: { report: AuditReport }) {
 							{CONTENT_TYPE_LABELS[report.contentType]} ·{" "}
 							{formatDate(report.createdAt)}
 						</p>
+						{report.retryOfReportId ? (
+							<p className="mt-2 text-sm text-muted-foreground">
+								Retried from{" "}
+								<Link
+									href={`/reports/${report.retryOfReportId}`}
+									className="font-medium text-foreground underline-offset-4 hover:underline"
+								>
+									previous failed audit
+								</Link>
+							</p>
+						) : null}
 					</div>
 					{hasCompletedAudit ? (
 						<div className="flex flex-wrap items-center gap-3">

@@ -27,6 +27,7 @@ export type AuditReport = {
   id: string;
   brandId: string;
   brandName: string;
+  retryOfReportId?: Doc<"auditReports">["_id"];
   auditor: {
     id: Doc<"users">["_id"];
     name: string | null;
