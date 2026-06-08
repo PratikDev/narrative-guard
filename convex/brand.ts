@@ -6,8 +6,10 @@ import {
   internalQuery,
   mutation,
   query,
+  type MutationCtx,
 } from "./_generated/server";
 import type { EntryId } from "@convex-dev/rag";
+import type { Doc, Id } from "./_generated/dataModel";
 import { requireAuthUserId } from "./lib/requireAuth";
 import {
 	resolveWorkspaceForMutation,
@@ -16,6 +18,38 @@ import {
 	requireWorkspaceRole,
 } from "./lib/workspaceAuth";
 import { BRAND_CONSTITUTION_KEY, brandNamespace, brandRag } from "./rag";
+
+export async function createConstitutionVersion(
+  ctx: MutationCtx,
+  args: {
+    workspaceId: Id<"workspaces">;
+    brandId: Id<"brands">;
+    userId: Id<"users">;
+    constitution: string;
+  },
+) {
+  const latestVersion = await ctx.db
+    .query("brandConstitutionVersions")
+    .withIndex("by_brand_and_version", (q) => q.eq("brandId", args.brandId))
+    .order("desc")
+    .first();
+
+  return await ctx.db.insert("brandConstitutionVersions", {
+    workspaceId: args.workspaceId,
+    brandId: args.brandId,
+    userId: args.userId,
+    version: latestVersion ? latestVersion.version + 1 : 1,
+    constitution: args.constitution,
+    createdAt: Date.now(),
+  });
+}
+
+function formatEditor(user: Doc<"users"> | null) {
+  return {
+    name: user?.name ?? null,
+    email: user?.email ?? null,
+  };
+}
 
 export const createBrand = mutation({
 	args: {
@@ -35,15 +69,23 @@ export const createBrand = mutation({
 		}
 
 		const now = Date.now();
+		const constitution = args.constitution.trim();
 
 		const brandId = await ctx.db.insert("brands", {
 			userId,
 			workspaceId: membership.workspaceId,
 			name: args.name.trim(),
-			constitution: args.constitution.trim(),
+			constitution,
       ragStatus: "indexing",
       createdAt: now,
       updatedAt: now,
+    });
+
+    await createConstitutionVersion(ctx, {
+      workspaceId: membership.workspaceId,
+      brandId,
+      userId,
+      constitution,
     });
 
     await ctx.scheduler.runAfter(0, internal.brand.ingestBrandConstitution, {
@@ -74,13 +116,25 @@ export const updateBrand = mutation({
 		}
 		await requireWorkspaceRole(ctx, brand.workspaceId, userId, "admin");
 
+		const constitution = args.constitution.trim();
+		const constitutionChanged = brand.constitution !== constitution;
+
 		await ctx.db.patch(args.brandId, {
       name: args.name.trim(),
-      constitution: args.constitution.trim(),
+      constitution,
       ragStatus: "indexing",
       ragError: undefined,
       updatedAt: Date.now(),
     });
+
+    if (constitutionChanged) {
+      await createConstitutionVersion(ctx, {
+        workspaceId: brand.workspaceId,
+        brandId: args.brandId,
+        userId,
+        constitution,
+      });
+    }
 
     await ctx.scheduler.runAfter(0, internal.brand.ingestBrandConstitution, {
       brandId: args.brandId,
@@ -129,6 +183,67 @@ export const listBrands = query({
 			)
 			.order("desc")
 			.collect();
+	  },
+	});
+
+export const listConstitutionVersions = query({
+  args: {
+    brandId: v.id("brands"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuthUserId(ctx);
+    const brand = await ctx.db.get(args.brandId);
+    if (!brand) {
+      throw new Error("Brand not found.");
+    }
+    await requireWorkspaceMember(ctx, brand.workspaceId, userId);
+
+    const versions = await ctx.db
+      .query("brandConstitutionVersions")
+      .withIndex("by_brand_and_created", (q) => q.eq("brandId", args.brandId))
+      .order("desc")
+      .collect();
+
+    return await Promise.all(
+      versions.map(async (version) => {
+        const editor = await ctx.db.get(version.userId);
+
+        return {
+          id: version._id,
+          version: version.version,
+          createdAt: version.createdAt,
+          editor: formatEditor(editor),
+        };
+      }),
+    );
+  },
+});
+
+export const getConstitutionVersion = query({
+  args: {
+    versionId: v.id("brandConstitutionVersions"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await requireAuthUserId(ctx);
+    const version = await ctx.db.get(args.versionId);
+    if (!version) {
+      throw new Error("Constitution version not found.");
+    }
+    await requireWorkspaceMember(ctx, version.workspaceId, userId);
+
+    const [brand, editor] = await Promise.all([
+      ctx.db.get(version.brandId),
+      ctx.db.get(version.userId),
+    ]);
+
+    return {
+      id: version._id,
+      version: version.version,
+      constitution: version.constitution,
+      createdAt: version.createdAt,
+      editor: formatEditor(editor),
+      brandName: brand?.name ?? "Deleted brand",
+    };
   },
 });
 

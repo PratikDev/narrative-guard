@@ -70,11 +70,19 @@ export async function createProcessingAuditReport(
   }
 ) {
   const now = Date.now();
+  const constitutionVersion = await ctx.db
+    .query("brandConstitutionVersions")
+    .withIndex("by_brand_and_version", (q) => q.eq("brandId", args.brandId))
+    .order("desc")
+    .first();
 
   return await ctx.db.insert("auditReports", {
     userId: args.userId,
     workspaceId: args.workspaceId,
     brandId: args.brandId,
+    ...(constitutionVersion
+      ? { brandConstitutionVersionId: constitutionVersion._id }
+      : {}),
     ...(args.retryOfReportId ? { retryOfReportId: args.retryOfReportId } : {}),
     contentType: args.contentType,
     originalContent: args.originalContent,

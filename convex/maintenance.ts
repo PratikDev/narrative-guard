@@ -10,8 +10,9 @@ const RAG_NAMESPACE_STATUSES = ["pending", "ready", "replaced"] as const;
 const wipeTable = v.union(
   v.literal("auditFindings"),
   v.literal("auditReports"),
-  v.literal("brands"),
   v.literal("notifications"),
+  v.literal("brandConstitutionVersions"),
+  v.literal("brands"),
   v.literal("workspaceInvites"),
   v.literal("workspaceMembers"),
   v.literal("workspaces"),
@@ -46,6 +47,14 @@ async function deleteBrands(ctx: MutationCtx) {
 
 async function deleteNotifications(ctx: MutationCtx) {
   const rows = await ctx.db.query("notifications").take(DELETE_BATCH_SIZE);
+  for (const row of rows) await ctx.db.delete(row._id);
+  return rows.length;
+}
+
+async function deleteBrandConstitutionVersions(ctx: MutationCtx) {
+  const rows = await ctx.db
+    .query("brandConstitutionVersions")
+    .take(DELETE_BATCH_SIZE);
   for (const row of rows) await ctx.db.delete(row._id);
   return rows.length;
 }
@@ -109,8 +118,9 @@ async function deleteUsers(ctx: MutationCtx) {
 const deleteTablePageHandlers: Record<WipeTable, DeleteTablePageHandler> = {
   auditFindings: deleteAuditFindings,
   auditReports: deleteAuditReports,
-  brands: deleteBrands,
   notifications: deleteNotifications,
+  brandConstitutionVersions: deleteBrandConstitutionVersions,
+  brands: deleteBrands,
   workspaceInvites: deleteWorkspaceInvites,
   workspaceMembers: deleteWorkspaceMembers,
   workspaces: deleteWorkspaces,
@@ -232,6 +242,7 @@ export const wipeAllData = action({
       "auditFindings",
       "auditReports",
       "notifications",
+      "brandConstitutionVersions",
       "brands",
       "workspaceInvites",
       "workspaceMembers",
@@ -248,6 +259,7 @@ export const wipeAllData = action({
       auditFindings: 0,
       auditReports: 0,
       notifications: 0,
+      brandConstitutionVersions: 0,
       brands: 0,
       workspaceInvites: 0,
       workspaceMembers: 0,

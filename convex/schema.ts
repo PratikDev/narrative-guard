@@ -146,10 +146,23 @@ export default defineSchema({
     .index("by_workspace", ["workspaceId"])
     .index("by_workspace_and_updated", ["workspaceId", "updatedAt"]),
 
+  brandConstitutionVersions: defineTable({
+    workspaceId: v.id("workspaces"),
+    brandId: v.id("brands"),
+    userId: v.id("users"),
+    version: v.number(),
+    constitution: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_brand_and_version", ["brandId", "version"])
+    .index("by_brand_and_created", ["brandId", "createdAt"])
+    .index("by_workspace_and_created", ["workspaceId", "createdAt"]),
+
   auditReports: defineTable({
     userId: v.id("users"),
     workspaceId: v.id("workspaces"),
     brandId: v.id("brands"),
+    brandConstitutionVersionId: v.optional(v.id("brandConstitutionVersions")),
     retryOfReportId: v.optional(v.id("auditReports")),
     contentType,
     originalContent: v.string(),

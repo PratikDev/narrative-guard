@@ -107,6 +107,9 @@ export function ReportDetail({ report }: { report: AuditReport }) {
 						<p className="mt-2 text-sm text-muted-foreground">
 							{CONTENT_TYPE_LABELS[report.contentType]} ·{" "}
 							{formatDate(report.createdAt)}
+							{report.brandConstitutionVersion
+								? ` · Constitution v${report.brandConstitutionVersion.version}`
+								: ""}
 						</p>
 						{report.retryOfReportId ? (
 							<p className="mt-2 text-sm text-muted-foreground">
