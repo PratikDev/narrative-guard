@@ -1,12 +1,26 @@
-import type { AnalyticsFilters, AnalyticsQueryArgs, DateRange, DateRangePreset } from "./analytics-types";
 import type { Id } from "@/convex/_generated/dataModel";
+import type { AnalyticsFilters, AnalyticsQueryArgs, DateRange, DateRangePreset } from "./analytics-types";
 
-export function dateRangeToTimestamps(preset: DateRangePreset): DateRange {
-  if (preset === "all") return { fromTs: undefined, toTs: undefined };
+export function dateRangeToTimestamps(
+  preset: DateRangePreset,
+): DateRange {
+  if (preset === "all") {
+    return { fromTs: undefined, toTs: undefined };
+  }
+
   const days = preset === "7d" ? 7 : preset === "30d" ? 30 : 90;
-  const toTs = Date.now();
-  const fromTs = toTs - days * 24 * 60 * 60 * 1000;
-  return { fromTs, toTs };
+
+  const to = new Date();
+  to.setHours(23, 59, 59, 999);
+
+  const from = new Date();
+  from.setHours(0, 0, 0, 0);
+  from.setDate(from.getDate() - (days - 1));
+
+  return {
+    fromTs: from.getTime(),
+    toTs: to.getTime(),
+  };
 }
 
 export function getPreviousPeriodRange(current: DateRange): DateRange {
@@ -41,15 +55,15 @@ export function formatTrend(pct: number | null): string | null {
 }
 
 export function fillDateGaps(
-  data: Array<{ date: string; [key: string]: unknown }>,
+  data: Array<{ date: string;[key: string]: unknown }>,
   fromTs: number | undefined,
   toTs: number | undefined,
   defaultValues: Record<string, unknown>,
-): Array<{ date: string; [key: string]: unknown }> {
+): Array<{ date: string;[key: string]: unknown }> {
   if (!fromTs || !toTs || data.length === 0) return data;
 
   const byDate = new Map(data.map((d) => [d.date, d]));
-  const result: Array<{ date: string; [key: string]: unknown }> = [];
+  const result: Array<{ date: string;[key: string]: unknown }> = [];
   const cursor = new Date(fromTs);
   const end = new Date(toTs);
   cursor.setHours(0, 0, 0, 0);
