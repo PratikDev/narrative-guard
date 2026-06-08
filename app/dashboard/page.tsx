@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { BrandHealthSummary } from "@/components/dashboard/BrandHealthSummary";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { PendingInvitationsCard } from "@/components/dashboard/PendingInvitationsCard";
 import { RecentReports } from "@/components/dashboard/RecentReports";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,7 @@ export default function DashboardPage() {
 					}
 				}
 			/>
+			<PendingInvitationsCard />
 			<div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.9fr)]">
 				<RecentReports reports={reports} />
 				<BrandHealthSummary

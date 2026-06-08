@@ -351,6 +351,52 @@ export const listInvites = query({
 	},
 });
 
+export const listMyPendingInvites = query({
+	args: {},
+	handler: async (ctx) => {
+		const userId = await requireAuthUserId(ctx);
+		const user = await ctx.db.get(userId);
+		const email = user?.email ? normalizeEmail(user.email) : "";
+
+		if (!email) return [];
+
+		const now = Date.now();
+		const invites = await ctx.db
+			.query("workspaceInvites")
+			.withIndex("by_email", (q) => q.eq("email", email))
+			.take(50);
+		const pendingInvites = invites
+			.filter((invite) => invite.status === "pending" && invite.expiresAt >= now)
+			.sort((a, b) => b.createdAt - a.createdAt);
+
+		return await Promise.all(
+			pendingInvites.map(async (invite) => {
+				const [workspace, inviter] = await Promise.all([
+					ctx.db.get(invite.workspaceId),
+					ctx.db.get(invite.invitedByUserId),
+				]);
+
+				return {
+					invite,
+					workspace: workspace
+						? {
+								id: workspace._id,
+								name: workspace.name,
+							}
+						: null,
+					inviter: inviter
+						? {
+								id: inviter._id,
+								name: inviter.name,
+								email: inviter.email,
+							}
+						: null,
+				};
+			}),
+		);
+	},
+});
+
 export const syncPendingInviteNotifications = mutation({
 	args: {},
 	handler: async (ctx) => {

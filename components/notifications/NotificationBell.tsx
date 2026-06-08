@@ -1,11 +1,10 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { Bell, Check, CheckCheck, X } from "lucide-react";
+import { Bell, CheckCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, type MouseEvent } from "react";
-import { toast } from "sonner";
 
+import { InviteResponseButtons } from "@/components/invitations/InviteResponseButtons";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -63,11 +62,6 @@ export function NotificationBell() {
 	const unreadCount = useQuery(api.notifications.unreadCount);
 	const markAsRead = useMutation(api.notifications.markAsRead);
 	const markAllAsRead = useMutation(api.notifications.markAllAsRead);
-	const acceptInviteById = useMutation(api.workspace.acceptInviteById);
-	const declineInviteById = useMutation(api.workspace.declineInviteById);
-	const [processingInviteId, setProcessingInviteId] = useState<
-		Notification["inviteId"] | null
-	>(null);
 	const visibleUnreadCount = unreadCount ?? 0;
 
 	function canRespondToInvite(notification: NotificationListItem) {
@@ -85,39 +79,6 @@ export function NotificationBell() {
 		}
 
 		router.push(notificationHref(notification));
-	}
-
-	async function handleInviteResponse(
-		event: MouseEvent<HTMLButtonElement>,
-		notification: NotificationListItem,
-		action: "accept" | "decline",
-	) {
-		event.preventDefault();
-		event.stopPropagation();
-
-		if (!notification.inviteId) return;
-
-		setProcessingInviteId(notification.inviteId);
-
-		try {
-			if (action === "accept") {
-				await acceptInviteById({ inviteId: notification.inviteId });
-				toast.success("Invitation accepted", {
-					description: "You can now access the workspace.",
-				});
-				return;
-			}
-
-			await declineInviteById({ inviteId: notification.inviteId });
-			toast.success("Invitation declined");
-		} catch (error) {
-			toast.error("Could not update invitation", {
-				description:
-					error instanceof Error ? error.message : "Please try again.",
-			});
-		} finally {
-			setProcessingInviteId(null);
-		}
 	}
 
 	return (
@@ -186,43 +147,13 @@ export function NotificationBell() {
 									<span className="mt-2 block text-xs text-muted-foreground">
 										{formatNotificationTime(notification.createdAt)}
 									</span>
-									{canRespondToInvite(notification) ? (
+									{canRespondToInvite(notification) && notification.inviteId ? (
 										<span
 											className="mt-3 flex gap-2"
 											onClick={(event) => event.stopPropagation()}
 											onPointerDown={(event) => event.stopPropagation()}
 										>
-											<Button
-												type="button"
-												size="sm"
-												disabled={processingInviteId === notification.inviteId}
-												onClick={(event) =>
-													void handleInviteResponse(
-														event,
-														notification,
-														"accept",
-													)
-												}
-											>
-												<Check data-icon="inline-start" />
-												Accept
-											</Button>
-											<Button
-												type="button"
-												variant="outline"
-												size="sm"
-												disabled={processingInviteId === notification.inviteId}
-												onClick={(event) =>
-													void handleInviteResponse(
-														event,
-														notification,
-														"decline",
-													)
-												}
-											>
-												<X data-icon="inline-start" />
-												Reject
-											</Button>
+											<InviteResponseButtons inviteId={notification.inviteId} />
 										</span>
 									) : null}
 								</span>
