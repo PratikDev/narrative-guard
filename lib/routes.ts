@@ -8,6 +8,7 @@ export const APP_ROUTES = {
 	audit: "/audit",
 	history: "/history",
 	team: "/team",
+	analytics: "/analytics",
 } as const;
 
 export const PUBLIC_SHELL_ROUTES = [

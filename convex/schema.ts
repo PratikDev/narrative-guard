@@ -231,6 +231,7 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_workspace", ["workspaceId"])
+    .index("by_workspace_created", ["workspaceId", "createdAt"])
     .index("by_report", ["reportId"])
     .index("by_brand", ["brandId"]),
 

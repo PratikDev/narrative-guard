@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as analytics from "../analytics.js";
 import type * as audit from "../audit.js";
 import type * as auditDraft from "../auditDraft.js";
 import type * as auth from "../auth.js";
@@ -34,6 +35,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  analytics: typeof analytics;
   audit: typeof audit;
   auditDraft: typeof auditDraft;
   auth: typeof auth;

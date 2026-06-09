@@ -8,6 +8,7 @@ import {
 	History,
 	LogOut,
 	ShieldCheck,
+	TrendingUp,
 	Users,
 } from "lucide-react";
 import Link from "next/link";
@@ -55,6 +56,11 @@ const data = {
 			name: "Team",
 			url: APP_ROUTES.team,
 			icon: Users,
+		},
+		{
+			name: "Analytics",
+			url: APP_ROUTES.analytics,
+			icon: TrendingUp,
 		},
 	],
 };
