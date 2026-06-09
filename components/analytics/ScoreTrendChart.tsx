@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import { useWorkspace } from "@/components/providers/WorkspaceProvider";
 import {
@@ -40,7 +40,7 @@ export function ScoreTrendChart({ filters }: Props) {
 				config={chartConfig}
 				className="h-70 w-full"
 			>
-				<LineChart data={data}>
+				<AreaChart data={data}>
 					<CartesianGrid vertical={false} />
 					<XAxis
 						dataKey="date"
@@ -55,14 +55,15 @@ export function ScoreTrendChart({ filters }: Props) {
 						tick={{ fontSize: 12 }}
 					/>
 					<ChartTooltip content={<ChartTooltipContent />} />
-					<Line
+					<Area
 						type="monotone"
 						dataKey="avgScore"
 						stroke="var(--color-avgScore)"
+						fill="var(--color-avgScore)"
+						fillOpacity={0.25}
 						strokeWidth={2}
-						dot={false}
 					/>
-				</LineChart>
+				</AreaChart>
 			</ChartContainer>
 		</ChartCard>
 	);

@@ -63,6 +63,49 @@ function avg(values: number[]): number {
   return values.length ? Math.round(values.reduce((s, v) => s + v, 0) / values.length) : 0;
 }
 
+function startOfUtcDay(ts: number): number {
+  const date = new Date(ts);
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+}
+
+function addUtcDays(ts: number, days: number): number {
+  const date = new Date(ts);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.getTime();
+}
+
+function resolveBucketRange(
+  reports: Doc<"auditReports">[],
+  fromTs: number | undefined,
+  toTs: number | undefined,
+): { start: number; end: number } | null {
+  if (reports.length === 0) return null;
+
+  const reportTimes = reports.map((report) => report.createdAt);
+  const minReportTs = Math.min(...reportTimes);
+  const maxReportTs = Math.max(...reportTimes);
+
+  return {
+    start: startOfUtcDay(fromTs ?? minReportTs),
+    end: startOfUtcDay(toTs ?? maxReportTs),
+  };
+}
+
+function buildDailyBuckets(
+  reports: Doc<"auditReports">[],
+  fromTs: number | undefined,
+  toTs: number | undefined,
+): string[] {
+  const range = resolveBucketRange(reports, fromTs, toTs);
+  if (!range) return [];
+
+  const buckets: string[] = [];
+  for (let cursor = range.start; cursor <= range.end; cursor = addUtcDays(cursor, 1)) {
+    buckets.push(toDateKey(cursor));
+  }
+  return buckets;
+}
+
 async function fetchFilteredReports(
   ctx: QueryCtx,
   workspaceId: Id<"workspaces">,
@@ -173,9 +216,14 @@ export const getScoreTrend = query({
       byDate.set(key, arr);
     }
 
-    return Array.from(byDate.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, scores]) => ({ date, avgScore: avg(scores), count: scores.length }));
+    return buildDailyBuckets(reports, args.fromTs, args.toTs).map((date) => {
+      const scores = byDate.get(date) ?? [];
+      return {
+        date,
+        avgScore: scores.length ? avg(scores) : 0,
+        count: scores.length,
+      };
+    });
   },
 });
 
@@ -194,9 +242,10 @@ export const getAuditVolume = query({
       byDate.set(key, (byDate.get(key) ?? 0) + 1);
     }
 
-    return Array.from(byDate.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([date, count]) => ({ date, count }));
+    return buildDailyBuckets(reports, args.fromTs, args.toTs).map((date) => ({
+      date,
+      count: byDate.get(date) ?? 0,
+    }));
   },
 });
 

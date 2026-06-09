@@ -28,13 +28,14 @@ export function AuditVolumeChart({ filters }: Props) {
 		api.analytics.getAuditVolume,
 		filtersToQueryArgs(filters, workspaceId),
 	);
+	const hasAuditVolume = data?.some((point) => point.count > 0) ?? false;
 
 	return (
 		<ChartCard
 			title="Audit Volume"
 			description="Number of audits run over time."
 			isLoading={data === undefined}
-			isEmpty={data?.length === 0}
+			isEmpty={data !== undefined && !hasAuditVolume}
 		>
 			<ChartContainer
 				config={chartConfig}
