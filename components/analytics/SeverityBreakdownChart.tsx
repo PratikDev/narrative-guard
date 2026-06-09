@@ -31,9 +31,9 @@ type Props = { filters: AnalyticsFilters };
 
 const chartConfig = {
 	count: { label: "Findings" },
-	low: { label: "Low", color: "hsl(var(--chart-1))" },
-	medium: { label: "Medium", color: "hsl(var(--chart-2))" },
-	high: { label: "High", color: "hsl(var(--destructive))" },
+	low: { label: "Low", color: "var(--chart-1)" },
+	medium: { label: "Medium", color: "var(--chart-2)" },
+	high: { label: "High", color: "var(--chart-risk)" },
 } satisfies ChartConfig;
 
 const ISSUE_TYPES = Object.keys(

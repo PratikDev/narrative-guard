@@ -27,7 +27,7 @@ import { filtersToQueryArgs } from "@/lib/analytics-utils";
 type Props = { filters: AnalyticsFilters };
 
 const chartConfig = {
-	count: { label: "Findings", color: "hsl(var(--chart-4))" },
+	count: { label: "Findings", color: "var(--chart-4)" },
 } satisfies ChartConfig;
 
 export function IssueTypeBreakdownChart({ filters }: Props) {
