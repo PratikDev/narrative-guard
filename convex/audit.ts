@@ -11,13 +11,13 @@ import {
   mutation,
   type MutationCtx,
 } from "./_generated/server";
+import { getAuditContentTypePolicy } from "./lib/auditContentTypes";
+import { buildAuditPrompt } from "./lib/auditPrompts";
 import {
   calculateFinalAuditScore,
   clampScore,
   verdictFromScore,
 } from "./lib/auditScoring";
-import { getAuditContentTypePolicy } from "./lib/auditContentTypes";
-import { buildAuditPrompt } from "./lib/auditPrompts";
 import { createNotification } from "./lib/notificationHelpers";
 import { requireAuthUserId } from "./lib/requireAuth";
 import { requireWorkspaceMember } from "./lib/workspaceAuth";
@@ -343,7 +343,7 @@ export const processManualAudit = internalAction({
       });
 
       const { output: result } = await generateText({
-        model: google.chat("gemini-2.5-flash"),
+        model: google.chat(process.env.GEMINI_MODEL ?? "gemini-3.6-flash"),
         temperature: 0.2,
         prompt: buildAuditPrompt({
           brand: audit.brand,

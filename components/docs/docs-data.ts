@@ -240,7 +240,7 @@ export const technicalSections: DocsSection[] = [
 			"The AI layer uses Brand Constitution RAG context plus content-type policy instructions to generate structured audit data.",
 		items: [
 			"Embedding model: gemini-embedding-001.",
-			"Generation model: gemini-2.5-flash.",
+			"Generation model: gemini-3.6-flash.",
 			"RAG search: hybrid search with nearby chunk context.",
 			"Explainability: findings include sentence, reason, evidence, severity, issue type.",
 		],

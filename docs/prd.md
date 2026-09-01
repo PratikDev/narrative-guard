@@ -98,7 +98,7 @@ The current product is functional for P1 usage:
 
 - Google Gemini
 - `gemini-embedding-001` for embeddings
-- `gemini-2.5-flash` for audit generation
+- `gemini-3.6-flash` for audit generation
 - AI SDK `generateText`
 - AI SDK structured output with Zod schema validation
 - `@convex-dev/rag` for Brand Constitution indexing and retrieval
