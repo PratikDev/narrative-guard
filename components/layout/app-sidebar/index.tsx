@@ -12,6 +12,7 @@ import {
 	Users,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -105,6 +106,7 @@ function NavUser({
 	user: { name: string; email: string; avatar: string };
 }) {
 	const { signOut } = useAuthActions();
+	const router = useRouter();
 	const fallback = user.name
 		.split(" ")
 		.map((part) => part[0])
@@ -137,7 +139,10 @@ function NavUser({
 			<SidebarMenuItem>
 				<SidebarMenuButton
 					type="button"
-					onClick={signOut}
+					onClick={() => {
+						router.replace(APP_ROUTES.home);
+						void signOut();
+					}}
 				>
 					<LogOut />
 					<span>Sign out</span>

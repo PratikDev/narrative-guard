@@ -3,10 +3,11 @@
 import { Authenticated, Unauthenticated } from "convex/react";
 import Link from "next/link";
 
+import { SignInButton } from "@/components/auth/SignInButton";
 import { Button } from "@/components/ui/button";
 import { APP_ROUTES } from "@/lib/routes";
 
-export function HeaderAuthLink({ signedOutHref }: { signedOutHref: string }) {
+export function HeaderAuthLink({ redirectTo }: { redirectTo?: string }) {
 	return (
 		<>
 			<Authenticated>
@@ -15,9 +16,7 @@ export function HeaderAuthLink({ signedOutHref }: { signedOutHref: string }) {
 				</Button>
 			</Authenticated>
 			<Unauthenticated>
-				<Button asChild>
-					<Link href={signedOutHref}>Sign in</Link>
-				</Button>
+				<SignInButton redirectTo={redirectTo}>Sign in</SignInButton>
 			</Unauthenticated>
 		</>
 	);

@@ -1,5 +1,5 @@
 import { StartAuditingLink } from "@/components/landing/StartAuditingLink";
-import { auditSignInPath } from "@/components/landing/landing-data";
+import { APP_ROUTES } from "@/lib/routes";
 
 export function FinalCtaSection() {
 	return (
@@ -13,7 +13,7 @@ export function FinalCtaSection() {
 						Audit your first piece of content.
 					</h2>
 				</div>
-				<StartAuditingLink signedOutHref={auditSignInPath} />
+				<StartAuditingLink redirectTo={APP_ROUTES.audit} />
 			</div>
 		</section>
 	);

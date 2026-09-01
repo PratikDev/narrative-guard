@@ -4,14 +4,11 @@ import { Authenticated, Unauthenticated } from "convex/react";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
+import { SignInButton } from "@/components/auth/SignInButton";
 import { Button } from "@/components/ui/button";
 import { APP_ROUTES } from "@/lib/routes";
 
-export function StartAuditingLink({
-	signedOutHref,
-}: {
-	signedOutHref: string;
-}) {
+export function StartAuditingLink({ redirectTo }: { redirectTo?: string }) {
 	return (
 		<>
 			<Authenticated>
@@ -26,15 +23,13 @@ export function StartAuditingLink({
 				</Button>
 			</Authenticated>
 			<Unauthenticated>
-				<Button
+				<SignInButton
 					size="lg"
-					asChild
+					redirectTo={redirectTo}
 				>
-					<Link href={signedOutHref}>
-						Start auditing
-						<ArrowRight data-icon="inline-end" />
-					</Link>
-				</Button>
+					Start auditing
+					<ArrowRight data-icon="inline-end" />
+				</SignInButton>
 			</Unauthenticated>
 		</>
 	);

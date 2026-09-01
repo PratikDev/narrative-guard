@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { APP_ROUTES } from "@/lib/routes";
 import { HeaderAuthLink } from "@/components/landing/LandingHeader/HeaderAuthLink";
-import { dashboardSignInPath } from "@/components/landing/landing-data";
 
 export function LandingHeader() {
 	return (
@@ -26,7 +25,7 @@ export function LandingHeader() {
 					>
 						<Link href={APP_ROUTES.scoring}>Scoring</Link>
 					</Button>
-					<HeaderAuthLink signedOutHref={dashboardSignInPath} />
+					<HeaderAuthLink redirectTo={APP_ROUTES.dashboard} />
 				</nav>
 			</div>
 		</header>

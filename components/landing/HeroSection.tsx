@@ -5,7 +5,6 @@ import { StartAuditingLink } from "@/components/landing/StartAuditingLink";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { APP_ROUTES } from "@/lib/routes";
-import { dashboardSignInPath } from "@/components/landing/landing-data";
 import { ProductPreview } from "@/components/landing/ProductPreview";
 
 export function HeroSection() {
@@ -36,7 +35,7 @@ export function HeroSection() {
 						</div>
 					</div>
 					<div className="flex flex-col gap-3 sm:flex-row">
-						<StartAuditingLink signedOutHref={dashboardSignInPath} />
+						<StartAuditingLink redirectTo={APP_ROUTES.dashboard} />
 						<Button
 							size="lg"
 							variant="outline"

@@ -1,10 +1,5 @@
 import { ClipboardCheck, PenLine, ShieldCheck } from "lucide-react";
 
-import { APP_ROUTES } from "@/lib/routes";
-
-export const dashboardSignInPath = `${APP_ROUTES.signIn}?next=${encodeURIComponent(APP_ROUTES.dashboard)}`;
-export const auditSignInPath = `${APP_ROUTES.signIn}?next=${encodeURIComponent(APP_ROUTES.audit)}`;
-
 export const contentTypes = [
 	{ name: "Generic text", description: "Fast checks for internal drafts." },
 	{
