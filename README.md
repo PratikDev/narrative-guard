@@ -24,7 +24,7 @@ Users can:
 - Download or print completed reports as PDFs.
 - Search, filter, paginate, and manage report history.
 - Review workspace analytics, risky audits, score trends, verdict distribution, content type performance, brand comparison, and member activity.
-- View public product docs, scoring docs, and live pitch/demo stats when docs visibility is enabled.
+- View a public scoring guide that explains the scoring system.
 
 ## Feature Overview
 
@@ -243,16 +243,6 @@ The public scoring guide explains the scoring system in non-technical terms.
 - Worked scoring example.
 - Score floors and caps.
 
-### Public Docs
-
-The `/docs` route is a public product and technical documentation surface.
-
-- Availability is controlled by `DOCS_PUBLIC_VISIBILITY`.
-- Scheduled availability can be configured with start/end timestamps or duration.
-- Team metadata can be configured with `DOCS_TEAM_JSON`.
-- When available, docs show sampled live aggregate stats from Convex.
-- Docs include YC-style pitch sections and technical architecture sections.
-
 ### Maintenance Utilities
 
 Development/admin maintenance actions exist in `convex/maintenance.ts`.
@@ -274,7 +264,6 @@ Public routes:
 | `/` | Landing page |
 | `/signin` | Google sign-in page |
 | `/scoring` | Public scoring guide |
-| `/docs` | Public product, pitch, and technical docs |
 
 Authenticated routes:
 
@@ -388,7 +377,6 @@ components/audit/        Audit form, drafts, results, rewrite comparison
 components/analytics/    Analytics charts, filter bar, risky audit table
 components/brands/       Brand setup, edit, selector, version history, RAG status
 components/dashboard/    Dashboard summary cards and workspace widgets
-components/docs/         Public docs content and UI
 components/history/      Report history table and columns
 components/layout/       Authenticated app shell and sidebar
 components/landing/      Marketing landing page
@@ -454,11 +442,6 @@ Local app variables:
 | `GOOGLE_GENERATIVE_AI_API_KEY` | Gemini embeddings and audit generation |
 | `AUTH_GOOGLE_ID` | Google OAuth client ID |
 | `AUTH_GOOGLE_SECRET` | Google OAuth client secret |
-| `DOCS_PUBLIC_VISIBILITY` | `on`, `off`, or `schedule` for `/docs` |
-| `DOCS_PUBLIC_START_AT` | Scheduled docs start timestamp |
-| `DOCS_PUBLIC_END_AT` | Scheduled docs end timestamp |
-| `DOCS_PUBLIC_DURATION_HOURS` | Optional duration override from start timestamp |
-| `DOCS_TEAM_JSON` | JSON metadata for the public docs team section |
 | `ENABLE_WIPE_ALL_DATA` | Enables dangerous maintenance actions when `true` |
 | `WIPE_ALL_DATA_TOKEN` | Required token for maintenance actions |
 
@@ -581,7 +564,7 @@ Then smoke test key flows:
 - Team invites, acceptance, decline, revocation, role changes, and removals.
 - Notifications.
 - Analytics filters and charts.
-- Public `/scoring` and `/docs`.
+- Public `/scoring`.
 
 ## Deployment
 
