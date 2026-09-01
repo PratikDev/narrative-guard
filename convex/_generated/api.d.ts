@@ -13,7 +13,6 @@ import type * as audit from "../audit.js";
 import type * as auditDraft from "../auditDraft.js";
 import type * as auth from "../auth.js";
 import type * as brand from "../brand.js";
-import type * as docs from "../docs.js";
 import type * as http from "../http.js";
 import type * as lib_auditContentTypes from "../lib/auditContentTypes.js";
 import type * as lib_auditPrompts from "../lib/auditPrompts.js";
@@ -40,7 +39,6 @@ declare const fullApi: ApiFromModules<{
   auditDraft: typeof auditDraft;
   auth: typeof auth;
   brand: typeof brand;
-  docs: typeof docs;
   http: typeof http;
   "lib/auditContentTypes": typeof lib_auditContentTypes;
   "lib/auditPrompts": typeof lib_auditPrompts;

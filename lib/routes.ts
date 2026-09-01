@@ -1,6 +1,5 @@
 export const APP_ROUTES = {
 	home: "/",
-	docs: "/docs",
 	dashboard: "/dashboard",
 	scoring: "/scoring",
 	signIn: "/signin",
@@ -13,7 +12,6 @@ export const APP_ROUTES = {
 
 export const PUBLIC_SHELL_ROUTES = [
 	APP_ROUTES.home,
-	APP_ROUTES.docs,
 	APP_ROUTES.scoring,
 	APP_ROUTES.signIn,
 ] as const;
