@@ -5,6 +5,15 @@ import { defineConfig } from "vitest/config";
 // so pin the runner timezone for deterministic results (CI should also set TZ=UTC).
 process.env.TZ = "UTC";
 
+// `prebuild` runs this suite inside `bun run build`, and hosts like Vercel
+// set NODE_ENV=production for the whole build. If that leaks through, React
+// and react-dom load their production bundles, which strip out `act` (see
+// react/cjs/react.production.js — no `exports.act` at all), breaking every
+// render()/renderHook() call with "React.act is not a function". Force a
+// non-production value here regardless of what the parent shell set.
+// (Next.js types NODE_ENV as readonly, hence the cast.)
+(process.env as Record<string, string>).NODE_ENV = "test";
+
 const projectRoot = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
