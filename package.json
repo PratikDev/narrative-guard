@@ -8,6 +8,9 @@
     "start": "next start",
     "prod": "bun run convex && bun run build && bun run start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "sad": "bunx --bun shadcn@latest add",
     "convex": "bunx convex dev --once",
     "convex:watch": "bunx convex dev",
@@ -23,7 +26,7 @@
     "ai": "^6.0.185",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "convex": "^1.39.1",
+    "convex": "^1.45.0",
     "diff": "^9.0.0",
     "lucide-react": "^1.16.0",
     "next": "16.2.6",
@@ -44,10 +47,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^5.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.0"
   },
   "ignoreScripts": [
     "sharp",
